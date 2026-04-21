@@ -73,4 +73,24 @@ class RubyNative::NativeDetectionTest < Minitest::Test
     assert controller.native_version >= "0.1.0"
     refute controller.native_version >= "1.0.0"
   end
+
+  def test_native_platform_returns_ios_for_ios_user_agent
+    controller = FakeController.new(FakeRequest.new("Ruby Native iOS/1.4 RubyNative/0.8.0"))
+    assert_equal "ios", controller.native_platform
+  end
+
+  def test_native_platform_returns_android_for_android_user_agent
+    controller = FakeController.new(FakeRequest.new("Ruby Native Android/0.1.0 RubyNative/0.8.0"))
+    assert_equal "android", controller.native_platform
+  end
+
+  def test_native_platform_returns_nil_for_web_browser
+    controller = FakeController.new(FakeRequest.new("Mozilla/5.0"))
+    assert_nil controller.native_platform
+  end
+
+  def test_native_platform_returns_nil_for_nil_user_agent
+    controller = FakeController.new(FakeRequest.new(nil))
+    assert_nil controller.native_platform
+  end
 end

@@ -107,6 +107,50 @@ class RubyNative::HelperTest < ActionView::TestCase
     refute_includes html, 'data-native-click'
   end
 
+  def test_native_fab_tag_requires_icon
+    assert_raises(ArgumentError) { native_fab_tag }
+  end
+
+  def test_resolve_icon_prefers_platform_specific
+    resolved = RubyNative::Helper.resolve_icon(
+      icon: "cup.and.saucer",
+      icons: { ios: "cup.and.saucer", android: "coffee" },
+      platform: "android"
+    )
+    assert_equal "coffee", resolved
+  end
+
+  def test_resolve_icon_falls_back_to_icon_when_platform_missing
+    resolved = RubyNative::Helper.resolve_icon(
+      icon: "star",
+      icons: { ios: "star.fill" },
+      platform: "android"
+    )
+    assert_equal "star", resolved
+  end
+
+  def test_resolve_icon_returns_nil_when_nothing_set
+    assert_nil RubyNative::Helper.resolve_icon(icon: nil, icons: nil, platform: "android")
+  end
+
+  def test_resolve_icon_accepts_string_keys
+    resolved = RubyNative::Helper.resolve_icon(
+      icon: nil,
+      icons: { "android" => "coffee" },
+      platform: "android"
+    )
+    assert_equal "coffee", resolved
+  end
+
+  def test_resolve_icon_without_platform_returns_fallback
+    resolved = RubyNative::Helper.resolve_icon(
+      icon: "cup.and.saucer",
+      icons: { ios: "cup.and.saucer", android: "coffee" },
+      platform: nil
+    )
+    assert_equal "cup.and.saucer", resolved
+  end
+
   def test_native_navbar_tag
     html = native_navbar_tag("Today")
     assert_includes html, 'data-native-navbar="Today"'

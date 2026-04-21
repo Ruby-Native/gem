@@ -2,6 +2,22 @@ import { defineComponent, h } from "vue"
 
 import("@inertiajs/vue3").then(m => { window.__inertiaRouter = m.router }).catch(() => {})
 
+function rubyNativePlatform() {
+  if (typeof navigator === "undefined") return null
+  const ua = navigator.userAgent || ""
+  if (ua.includes("Ruby Native iOS")) return "ios"
+  if (ua.includes("Ruby Native Android")) return "android"
+  return null
+}
+
+function resolveIcon(icon, icons) {
+  if (icons) {
+    const platform = rubyNativePlatform()
+    if (platform && icons[platform]) return icons[platform]
+  }
+  return icon
+}
+
 export const NativeTabs = defineComponent({
   name: "NativeTabs",
   props: {
@@ -40,14 +56,16 @@ export const NativeButton = defineComponent({
   props: {
     position: { type: String, default: "trailing" },
     icon: String,
+    icons: Object,
     title: String,
     href: String,
     click: String,
     selected: { type: Boolean, default: undefined }
   },
   render() {
+    const resolved = resolveIcon(this.icon, this.icons)
     const attrs = { "data-native-button": true }
-    if (this.icon) attrs["data-native-icon"] = this.icon
+    if (resolved) attrs["data-native-icon"] = resolved
     if (this.title) attrs["data-native-title"] = this.title
     if (this.href) attrs["data-native-href"] = this.href
     if (this.click) attrs["data-native-click"] = this.click
@@ -64,14 +82,16 @@ export const NativeMenuItem = defineComponent({
     href: String,
     click: String,
     icon: String,
+    icons: Object,
     selected: { type: Boolean, default: undefined }
   },
   render() {
+    const resolved = resolveIcon(this.icon, this.icons)
     const attrs = { "data-native-menu-item": true }
     if (this.title) attrs["data-native-title"] = this.title
     if (this.href) attrs["data-native-href"] = this.href
     if (this.click) attrs["data-native-click"] = this.click
-    if (this.icon) attrs["data-native-icon"] = this.icon
+    if (resolved) attrs["data-native-icon"] = resolved
     if (this.selected) attrs["data-native-selected"] = ""
     return h("div", attrs)
   }
@@ -80,12 +100,15 @@ export const NativeMenuItem = defineComponent({
 export const NativeFab = defineComponent({
   name: "NativeFab",
   props: {
-    icon: { type: String, required: true },
+    icon: String,
+    icons: Object,
     href: String,
     click: String
   },
   render() {
-    const attrs = { "data-native-fab": true, "data-native-icon": this.icon, hidden: true }
+    const resolved = resolveIcon(this.icon, this.icons)
+    if (!resolved) throw new Error("NativeFab requires `icon` or `icons`")
+    const attrs = { "data-native-fab": true, "data-native-icon": resolved, hidden: true }
     if (this.href) attrs["data-native-href"] = this.href
     if (this.click) attrs["data-native-click"] = this.click
     return h("div", attrs)

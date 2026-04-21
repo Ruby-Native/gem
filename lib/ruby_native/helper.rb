@@ -53,8 +53,10 @@ module RubyNative
       tag.div(data: { native_navbar: title.to_s }, hidden: true) { builder.to_html }
     end
 
-    def native_fab_tag(icon:, href: nil, click: nil)
-      data = { native_fab: true, native_icon: icon }
+    def native_fab_tag(icon: nil, icons: nil, href: nil, click: nil)
+      resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: try(:native_platform))
+      raise ArgumentError, "native_fab_tag requires an icon" if resolved.nil?
+      data = { native_fab: true, native_icon: resolved }
       data[:native_href] = href if href
       data[:native_click] = click if click
       tag.div(data: data, hidden: true)
@@ -71,16 +73,31 @@ module RubyNative
       data
     end
 
+    # Picks the right icon name for the current native platform. Accepts the
+    # single `icon:` form (applied to every platform) and/or the `icons:` hash
+    # form (`{ ios: "...", android: "..." }`). When both are given, a matching
+    # `icons[platform]` wins; otherwise falls back to `icon`. Returns nil when
+    # nothing resolves.
+    def self.resolve_icon(icon: nil, icons: nil, platform: nil)
+      if icons.is_a?(Hash) && platform
+        key = platform.to_sym
+        per_platform = icons[key] || icons[key.to_s]
+        return per_platform if per_platform
+      end
+      icon
+    end
+
     class NavbarBuilder
       def initialize(context)
         @context = context
         @items = []
       end
 
-      def button(title = nil, icon: nil, href: nil, click: nil, position: :trailing, selected: false, &block)
+      def button(title = nil, icon: nil, icons: nil, href: nil, click: nil, position: :trailing, selected: false, &block)
+        resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_button: "" }
         data[:native_title] = title if title
-        data[:native_icon] = icon if icon
+        data[:native_icon] = resolved if resolved
         data[:native_href] = href if href
         data[:native_click] = click if click
         data[:native_position] = position.to_s
@@ -114,11 +131,12 @@ module RubyNative
         @items = []
       end
 
-      def item(title, href: nil, click: nil, icon: nil, selected: false)
+      def item(title, href: nil, click: nil, icon: nil, icons: nil, selected: false)
+        resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_menu_item: "", native_title: title }
         data[:native_href] = href if href
         data[:native_click] = click if click
-        data[:native_icon] = icon if icon
+        data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
         @items << @context.tag.div(data: data)
       end

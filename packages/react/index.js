@@ -2,6 +2,22 @@ import { createElement } from "react"
 
 import("@inertiajs/react").then(m => { window.__inertiaRouter = m.router }).catch(() => {})
 
+function rubyNativePlatform() {
+  if (typeof navigator === "undefined") return null
+  const ua = navigator.userAgent || ""
+  if (ua.includes("Ruby Native iOS")) return "ios"
+  if (ua.includes("Ruby Native Android")) return "android"
+  return null
+}
+
+function resolveIcon(icon, icons) {
+  if (icons) {
+    const platform = rubyNativePlatform()
+    if (platform && icons[platform]) return icons[platform]
+  }
+  return icon
+}
+
 export function NativeTabs({ enabled = true }) {
   if (!enabled) return null
   return createElement("div", { "data-native-tabs": true, hidden: true })
@@ -19,9 +35,10 @@ export function NativeNavbar({ title = "", children }) {
   return createElement("div", { "data-native-navbar": title, hidden: true }, children)
 }
 
-export function NativeButton({ position = "trailing", icon, title, href, click, selected, children }) {
+export function NativeButton({ position = "trailing", icon, icons, title, href, click, selected, children }) {
+  const resolved = resolveIcon(icon, icons)
   const props = { "data-native-button": true }
-  if (icon) props["data-native-icon"] = icon
+  if (resolved) props["data-native-icon"] = resolved
   if (title) props["data-native-title"] = title
   if (href) props["data-native-href"] = href
   if (click) props["data-native-click"] = click
@@ -30,18 +47,21 @@ export function NativeButton({ position = "trailing", icon, title, href, click, 
   return createElement("div", props, children)
 }
 
-export function NativeMenuItem({ title, href, click, icon, selected }) {
+export function NativeMenuItem({ title, href, click, icon, icons, selected }) {
+  const resolved = resolveIcon(icon, icons)
   const props = { "data-native-menu-item": true }
   if (title) props["data-native-title"] = title
   if (href) props["data-native-href"] = href
   if (click) props["data-native-click"] = click
-  if (icon) props["data-native-icon"] = icon
+  if (resolved) props["data-native-icon"] = resolved
   if (selected) props["data-native-selected"] = ""
   return createElement("div", props)
 }
 
-export function NativeFab({ icon, href, click }) {
-  const props = { "data-native-fab": true, "data-native-icon": icon, hidden: true }
+export function NativeFab({ icon, icons, href, click }) {
+  const resolved = resolveIcon(icon, icons)
+  if (!resolved) throw new Error("NativeFab requires `icon` or `icons`")
+  const props = { "data-native-fab": true, "data-native-icon": resolved, hidden: true }
   if (href) props["data-native-href"] = href
   if (click) props["data-native-click"] = click
   return createElement("div", props)
