@@ -1,9 +1,12 @@
 require "open3"
+require "net/http"
+require "uri"
 
 module RubyNative
   class CLI
     class Preview
       TUNNEL_URL_PATTERN = %r{https://[a-z0-9-]+\.trycloudflare\.com}
+      CONFIG_PATH = "/native/config.json"
 
       BLACK_BG = "\033[40m"
       WHITE_BG = "\033[107m"
@@ -17,10 +20,39 @@ module RubyNative
 
       def run
         check_cloudflared!
+        check_local_server!
         start_tunnel
       end
 
       private
+
+      def check_local_server!
+        uri = URI("http://localhost:#{@port}#{CONFIG_PATH}")
+        response = fetch_config_response(uri)
+
+        return if response.is_a?(Net::HTTPSuccess)
+
+        puts "Rails server is running on port #{@port}, but #{CONFIG_PATH} returned #{response.code}."
+        puts ""
+        puts "Make sure the ruby_native gem is installed and mounted:"
+        puts "  https://rubynative.com/docs/install"
+        exit 1
+      rescue Errno::ECONNREFUSED
+        puts "Nothing is running on port #{@port}."
+        puts ""
+        puts "Start your Rails server in another terminal:"
+        puts "  bin/rails server -p #{@port}"
+        exit 1
+      rescue => e
+        puts "Could not reach http://localhost:#{@port}#{CONFIG_PATH}: #{e.message}"
+        exit 1
+      end
+
+      def fetch_config_response(uri)
+        Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 5) do |http|
+          http.get(uri.request_uri)
+        end
+      end
 
       def parse_port(argv)
         index = argv.index("--port")
