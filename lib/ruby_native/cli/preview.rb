@@ -7,6 +7,8 @@ module RubyNative
     class Preview
       TUNNEL_URL_PATTERN = %r{https://[a-z0-9-]+\.trycloudflare\.com}
       CONFIG_PATH = "/native/config.json"
+      TUNNEL_READY_TIMEOUT = 60
+      TUNNEL_POLL_INTERVAL = 1
 
       def initialize(argv)
         @port = parse_port(argv)
@@ -43,9 +45,37 @@ module RubyNative
       end
 
       def fetch_config_response(uri)
-        Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 5) do |http|
+        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 5) do |http|
           http.get(uri.request_uri)
         end
+      end
+
+      def wait_for_tunnel(url)
+        uri = URI("#{url}#{CONFIG_PATH}")
+        deadline = monotonic_now + TUNNEL_READY_TIMEOUT
+
+        print "Waiting for tunnel..."
+        loop do
+          response = fetch_config_response(uri) rescue nil
+          if response.is_a?(Net::HTTPSuccess)
+            puts " ready."
+            return
+          end
+
+          if monotonic_now >= deadline
+            puts ""
+            puts "Tunnel did not respond within #{TUNNEL_READY_TIMEOUT}s at #{url}."
+            puts "Showing the URL anyway. It may take a few more seconds before scanning works."
+            return
+          end
+
+          print "."
+          sleep TUNNEL_POLL_INTERVAL
+        end
+      end
+
+      def monotonic_now
+        Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
 
       def parse_port(argv)
@@ -87,6 +117,7 @@ module RubyNative
         stdout_err.each_line do |line|
           if line =~ TUNNEL_URL_PATTERN
             tunnel_url = line[TUNNEL_URL_PATTERN]
+            wait_for_tunnel(tunnel_url)
             display_qr(tunnel_url)
           end
         end

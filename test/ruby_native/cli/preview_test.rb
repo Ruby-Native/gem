@@ -36,6 +36,41 @@ class PreviewTest < Minitest::Test
     assert_match(/Could not reach/, out)
   end
 
+  def test_wait_for_tunnel_returns_when_ready
+    stub_http_response(Net::HTTPSuccess.new("1.1", "200", "OK"))
+    @preview.define_singleton_method(:sleep) { |_| }
+    out, _err = capture_io do
+      @preview.send(:wait_for_tunnel, "https://example.trycloudflare.com")
+    end
+    assert_match(/ready\./, out)
+  end
+
+  def test_wait_for_tunnel_polls_until_success
+    responses = [
+      Net::HTTPNotFound.new("1.1", "404", "Not Found"),
+      Net::HTTPNotFound.new("1.1", "404", "Not Found"),
+      Net::HTTPSuccess.new("1.1", "200", "OK")
+    ]
+    @preview.define_singleton_method(:fetch_config_response) { |_uri| responses.shift }
+    @preview.define_singleton_method(:sleep) { |_| }
+    out, _err = capture_io do
+      @preview.send(:wait_for_tunnel, "https://example.trycloudflare.com")
+    end
+    assert_match(/Waiting for tunnel\.\.\.\.\. ready\./, out)
+    assert_empty responses
+  end
+
+  def test_wait_for_tunnel_gives_up_after_timeout
+    stub_http_response(Net::HTTPNotFound.new("1.1", "404", "Not Found"))
+    @preview.define_singleton_method(:sleep) { |_| }
+    times = [0, 5, 70]
+    @preview.define_singleton_method(:monotonic_now) { times.shift || 999 }
+    out, _err = capture_io do
+      @preview.send(:wait_for_tunnel, "https://example.trycloudflare.com")
+    end
+    assert_match(/did not respond within 60s/, out)
+  end
+
   private
 
   def stub_http_response(response)
