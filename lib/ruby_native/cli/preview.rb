@@ -8,12 +8,6 @@ module RubyNative
       TUNNEL_URL_PATTERN = %r{https://[a-z0-9-]+\.trycloudflare\.com}
       CONFIG_PATH = "/native/config.json"
 
-      BLACK_BG = "\033[40m"
-      WHITE_BG = "\033[107m"
-      BLACK_FG = "\033[30m"
-      WHITE_FG = "\033[97m"
-      RESET = "\033[0m"
-
       def initialize(argv)
         @port = parse_port(argv)
       end
@@ -105,39 +99,26 @@ module RubyNative
       def display_qr(url)
         require "rqrcode"
 
-        qr = RQRCode::QRCode.new(url)
+        qr = RQRCode::QRCode.new(url, level: :l)
         modules = qr.modules
-
-        puts "\n\n"
-
-        # Use Unicode half-block characters to render two QR rows per
-        # terminal row, cutting the height in half for square proportions.
-        quiet = 1
         size = modules.length
-        total = size + quiet * 2
+        quiet_h = 4
+        quiet_v = 2
 
-        lines = []
+        dark = "██"
+        light = "  "
 
-        (0...total).step(2) do |r|
-          line = ""
-          total.times do |c|
-            top = pixel_dark?(modules, r, c, quiet, size)
-            bottom = pixel_dark?(modules, r + 1, c, quiet, size)
-
-            if top && bottom
-              line << "#{BLACK_BG} #{RESET}"
-            elsif top
-              line << "#{BLACK_BG}#{WHITE_FG}\u2584#{RESET}"
-            elsif bottom
-              line << "#{WHITE_BG}#{BLACK_FG}\u2584#{RESET}"
-            else
-              line << "#{WHITE_BG} #{RESET}"
-            end
+        puts ""
+        (0...(size + quiet_v * 2)).each do |r|
+          line = +""
+          (0...(size + quiet_h * 2)).each do |c|
+            mr = r - quiet_v
+            mc = c - quiet_h
+            inside = mr >= 0 && mr < size && mc >= 0 && mc < size
+            line << (inside && modules[mr][mc] ? dark : light)
           end
-          lines << line
+          puts line
         end
-
-        puts lines.join("\n")
         puts ""
         puts url
         puts ""
@@ -159,12 +140,6 @@ module RubyNative
         Process.wait(@tunnel_pid)
       rescue Errno::ESRCH, Errno::ECHILD
         # Process already exited.
-      end
-
-      def pixel_dark?(modules, row, col, quiet, size)
-        r = row - quiet
-        c = col - quiet
-        r >= 0 && r < size && c >= 0 && c < size && modules[r][c]
       end
     end
   end
