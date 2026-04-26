@@ -37,21 +37,23 @@ class PreviewTest < Minitest::Test
   end
 
   def test_wait_for_tunnel_returns_when_ready
-    stub_http_response(Net::HTTPSuccess.new("1.1", "200", "OK"))
+    stub_dns("1.2.3.4")
+    @preview.define_singleton_method(:fetch_config_response) { |_uri, ip: nil| Net::HTTPSuccess.new("1.1", "200", "OK") }
     @preview.define_singleton_method(:sleep) { |_| }
     out, _err = capture_io do
       @preview.send(:wait_for_tunnel, "https://example.trycloudflare.com")
     end
-    assert_match(/ready\./, out)
+    assert_match(/Waiting for tunnel\.\.\. ready\./, out)
   end
 
   def test_wait_for_tunnel_polls_until_success
+    stub_dns("1.2.3.4")
     responses = [
       Net::HTTPNotFound.new("1.1", "404", "Not Found"),
       Net::HTTPNotFound.new("1.1", "404", "Not Found"),
       Net::HTTPSuccess.new("1.1", "200", "OK")
     ]
-    @preview.define_singleton_method(:fetch_config_response) { |_uri| responses.shift }
+    @preview.define_singleton_method(:fetch_config_response) { |_uri, ip: nil| responses.shift }
     @preview.define_singleton_method(:sleep) { |_| }
     out, _err = capture_io do
       @preview.send(:wait_for_tunnel, "https://example.trycloudflare.com")
@@ -60,8 +62,25 @@ class PreviewTest < Minitest::Test
     assert_empty responses
   end
 
+  def test_wait_for_tunnel_keeps_polling_after_dns_failure
+    lookups = [Resolv::ResolvError.new("no A record"), "1.2.3.4"]
+    @preview.define_singleton_method(:resolve_via_public_dns) do |_host|
+      result = lookups.shift
+      raise result if result.is_a?(Exception)
+      result
+    end
+    @preview.define_singleton_method(:fetch_config_response) { |_uri, ip: nil| Net::HTTPSuccess.new("1.1", "200", "OK") }
+    @preview.define_singleton_method(:sleep) { |_| }
+    out, _err = capture_io do
+      @preview.send(:wait_for_tunnel, "https://example.trycloudflare.com")
+    end
+    assert_match(/Waiting for tunnel\.\.\.\. ready\./, out)
+    assert_empty lookups
+  end
+
   def test_wait_for_tunnel_gives_up_after_timeout
-    stub_http_response(Net::HTTPNotFound.new("1.1", "404", "Not Found"))
+    stub_dns("1.2.3.4")
+    @preview.define_singleton_method(:fetch_config_response) { |_uri, ip: nil| Net::HTTPNotFound.new("1.1", "404", "Not Found") }
     @preview.define_singleton_method(:sleep) { |_| }
     times = [0, 5, 70]
     @preview.define_singleton_method(:monotonic_now) { times.shift || 999 }
@@ -79,5 +98,9 @@ class PreviewTest < Minitest::Test
 
   def stub_http_raise(error)
     @preview.define_singleton_method(:fetch_config_response) { |_uri| raise error }
+  end
+
+  def stub_dns(ip)
+    @preview.define_singleton_method(:resolve_via_public_dns) { |_host| ip }
   end
 end

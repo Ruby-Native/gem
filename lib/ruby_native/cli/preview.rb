@@ -1,6 +1,7 @@
 require "open3"
 require "net/http"
 require "uri"
+require "resolv"
 
 module RubyNative
   class CLI
@@ -9,6 +10,7 @@ module RubyNative
       CONFIG_PATH = "/native/config.json"
       TUNNEL_READY_TIMEOUT = 60
       TUNNEL_POLL_INTERVAL = 1
+      PUBLIC_NAMESERVERS = ["1.1.1.1", "8.8.8.8"].freeze
 
       def initialize(argv)
         @port = parse_port(argv)
@@ -44,22 +46,31 @@ module RubyNative
         exit 1
       end
 
-      def fetch_config_response(uri)
-        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 2, read_timeout: 5) do |http|
-          http.get(uri.request_uri)
-        end
+      def fetch_config_response(uri, ip: nil)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.ipaddr = ip if ip
+        http.use_ssl = (uri.scheme == "https")
+        http.open_timeout = 2
+        http.read_timeout = 5
+        http.start { http.get(uri.request_uri) }
       end
 
       def wait_for_tunnel(url)
         uri = URI("#{url}#{CONFIG_PATH}")
         deadline = monotonic_now + TUNNEL_READY_TIMEOUT
+        ip = nil
 
         print "Waiting for tunnel..."
         loop do
-          response = fetch_config_response(uri) rescue nil
-          if response.is_a?(Net::HTTPSuccess)
-            puts " ready."
-            return
+          begin
+            ip ||= resolve_via_public_dns(uri.host)
+            response = fetch_config_response(uri, ip: ip)
+            if response.is_a?(Net::HTTPSuccess)
+              puts " ready."
+              return
+            end
+          rescue Resolv::ResolvError, Resolv::ResolvTimeout, StandardError
+            # Keep polling.
           end
 
           if monotonic_now >= deadline
@@ -72,6 +83,16 @@ module RubyNative
           print "."
           sleep TUNNEL_POLL_INTERVAL
         end
+      end
+
+      def resolve_via_public_dns(host)
+        resolver = Resolv::DNS.new(nameserver: PUBLIC_NAMESERVERS)
+        resolver.timeouts = [2, 4]
+        addresses = resolver.getaddresses(host)
+        raise Resolv::ResolvError, "no A/AAAA record for #{host}" if addresses.empty?
+        addresses.first.to_s
+      ensure
+        resolver&.close
       end
 
       def monotonic_now
