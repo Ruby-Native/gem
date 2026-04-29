@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- `TunnelCookieMiddleware` no longer joins multi-cookie responses with `"\n"`. Under Rack 3 this caused browsers to drop every cookie after the first, breaking login through the Cloudflare tunnel preview. Multi-cookie responses now return an `Array` of `Set-Cookie` strings, matching Rack 3's contract.
+
 ## [0.8.1] - 2026-04-22
 
 ### Fixed
