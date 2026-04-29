@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.8.2] - 2026-04-29
 
+### Added
+
+- **`native_fab_tag` floating action button signal.** Renders a native floating button above the tab bar. Accepts `icon:` (SF Symbols name, required), `href:` (URL to visit), and `click:` (CSS selector to click). Shows/hides per page based on signal presence. Works in both Normal and Advanced Mode. iOS 26+ renders with Liquid Glass styling, older versions use a bordered button.
+- **`NativeFab` component for React and Vue.** Same API as the ERB helper: `icon`, `href`, and `click` props.
+
 ### Fixed
 
 - `TunnelCookieMiddleware` no longer joins multi-cookie responses with `"\n"`. Under Rack 3 this caused browsers to drop every cookie after the first, breaking login through the Cloudflare tunnel preview. Multi-cookie responses now return an `Array` of `Set-Cookie` strings, matching Rack 3's contract.
@@ -20,8 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **`native_fab_tag` floating action button signal.** Renders a native floating button above the tab bar. Accepts `icon:` (SF Symbols name, required), `href:` (URL to visit), and `click:` (CSS selector to click). Shows/hides per page based on signal presence. Works in both Normal and Advanced Mode. iOS 26+ renders with Liquid Glass styling, older versions use a bordered button.
-- **`NativeFab` component for React and Vue.** Same API as the ERB helper: `icon`, `href`, and `click` props.
 - `ruby_native deploy --if-needed` skips the build when the gem version matches the last successful build. Designed for CI: add it as a post-deploy step and it's a no-op until you bump the gem. Triggers the build and exits immediately without polling.
 - `RUBY_NATIVE_TOKEN` environment variable for CLI authentication in CI. Takes priority over the stored credentials file. Generate a token with `ruby_native login` locally, then set it as a CI secret.
 - Build failure email notifications. When a build fails, the account owner receives an email with the error details and a link to the builds page.
