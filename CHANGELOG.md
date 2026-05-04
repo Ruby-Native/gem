@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Authenticated App Store screenshots from a real iOS Simulator.** Generate a per-app screenshot key on the Ruby Native dashboard, register a `screenshot_sign_in` lambda in your initializer, and Ruby Native captures App Store screenshots against your deployed site, signed in as a designated user.
+- **`RubyNative.configure` block.** Set `c.screenshot_key` and `c.screenshot_sign_in` for the screenshot session endpoint.
+- **`GET /native/screenshots/session` endpoint** mounted by the gem engine. Validates the screenshot key, calls the configured sign-in lambda, and sets a session-scoped cookie.
+- **`ruby_native_screenshot_session?` view helper.** Returns true when the current request is part of a screenshot run, so views can render deterministically (frozen timestamps, hidden push banners, suppressed analytics).
+
+### Removed
+
+- **`ruby_native screenshots` CLI command.** Screenshots are now captured by Ruby Native's CI infrastructure, not by a local Playwright run. Calling the old command after upgrading prints a deprecation message and exits non-zero.
+
 ## [0.8.2] - 2026-04-29
 
 ### Added

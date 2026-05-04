@@ -154,7 +154,6 @@ Set `RUBY_NATIVE_TOKEN` as an environment variable for CI (no interactive login 
 bundle exec ruby_native login         # authenticate (opens browser)
 bundle exec ruby_native deploy        # trigger a build
 bundle exec ruby_native preview       # start a tunnel and display a QR code
-bundle exec ruby_native screenshots   # capture App Store screenshots
 bundle exec ruby_native logout        # remove stored credentials
 ```
 
