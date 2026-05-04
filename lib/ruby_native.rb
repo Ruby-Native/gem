@@ -16,6 +16,14 @@ module RubyNative
   mattr_accessor :config
   mattr_accessor :subscription_callbacks, default: []
 
+  # Screenshot configuration. Set via `RubyNative.configure` in an initializer.
+  mattr_accessor :screenshot_key
+  mattr_accessor :screenshot_sign_in
+
+  def self.configure
+    yield self
+  end
+
   def self.on_subscription_change(&block)
     subscription_callbacks << block
   end
