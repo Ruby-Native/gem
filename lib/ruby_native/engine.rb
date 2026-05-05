@@ -9,7 +9,7 @@ module RubyNative
     end
 
     initializer "ruby_native.filter_params" do |app|
-      app.config.filter_parameters += [:signedPayload]
+      app.config.filter_parameters += [:signedPayload, :ruby_native_screenshot_key]
     end
 
     initializer "ruby_native.helpers" do

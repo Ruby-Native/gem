@@ -25,7 +25,7 @@ module RubyNative
         return unless File.exist?(gitignore)
         return if File.read(gitignore).include?(".ruby_native")
 
-        append_to_file ".gitignore", "\n# Ruby Native (Playwright, screenshots, session data)\n.ruby_native/\n"
+        append_to_file ".gitignore", "\n# Ruby Native\n.ruby_native/\n"
         say "  Added .ruby_native/ to .gitignore", :green
       end
 

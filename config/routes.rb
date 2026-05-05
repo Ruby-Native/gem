@@ -15,4 +15,7 @@ RubyNative::Engine.routes.draw do
     post "completions/:uuid", to: "completions#create", as: :completion
     resource :restore, only: :create
   end
+  namespace :screenshots do
+    resource :session, only: :show, controller: "sessions"
+  end
 end

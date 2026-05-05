@@ -1,5 +1,18 @@
 module RubyNative
   module Helper
+    # True when the current request is part of a Ruby Native screenshot run.
+    # Use this to render deterministically: freeze relative timestamps, hide
+    # push banners, suppress ads, disable A/B variants, skip notifications.
+    #
+    #   <% if ruby_native_screenshot_session? %>
+    #     Stamped 2 days ago
+    #   <% else %>
+    #     <%= time_ago_in_words(stamp.created_at) %>
+    #   <% end %>
+    def ruby_native_screenshot_session?
+      cookies[:_ruby_native_screenshot_session] == "1"
+    end
+
     def native_tabs_tag(enabled: true)
       return "".html_safe unless enabled
       tag.div(data: { native_tabs: true }, hidden: true)
