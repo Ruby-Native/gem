@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **`icons:` option for per-platform icon names.** Pass `icons: { ios:, android: }` alongside the existing `icon:` string on navbar buttons, menu items, FABs, and tabs to use platform-specific icon identifiers. Resolves via the native platform parsed from the Ruby Native UA, falling back to `icon:` when the platform-specific value is missing. Available in the ERB helpers, the React package, and the Vue package. Motivated by Android needing Material Symbols names (e.g. `coffee`, `shopping_bag`) instead of the SF Symbols identifiers (`cup.and.saucer`, `bag`) that work on iOS. Additive: existing configs using `icon:` keep working unchanged.
+- **`ruby_native deploy --android` triggers an Android cloud build instead of iOS.** Polling and success messaging adapt to Play Internal Testing. Pass `--platform=ios|android|all` for explicit control; default behavior is unchanged.
 
 ## [0.9.0] - 2026-05-05
 

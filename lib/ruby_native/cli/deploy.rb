@@ -16,6 +16,7 @@ module RubyNative
 
       def initialize(argv)
         @if_needed = argv.include?("--if-needed")
+        @platform = parse_platform(argv)
       end
 
       def run
@@ -105,7 +106,7 @@ module RubyNative
         req = Net::HTTP::Post.new(uri)
         req["Authorization"] = "Token #{Credentials.token}"
         req["Content-Type"] = "application/json"
-        req.body = JSON.generate(gem_version: RubyNative::VERSION)
+        req.body = JSON.generate(build_payload)
 
         response = make_request(uri, req)
 
@@ -174,7 +175,7 @@ module RubyNative
             puts "  Version: v#{data["version"]} (#{data["number"]})"
             puts "  Ruby Native: #{data["native_version"]}" if data["native_version"]
             puts ""
-            puts "Your build is being submitted to TestFlight."
+            puts success_destination_message(data)
             break
           when "failure", "failed", "cancelled"
             puts ""
@@ -208,13 +209,57 @@ module RubyNative
       end
 
       def print_status(status)
-        labels = {
-          "queued" => "Queued",
-          "building" => "Building",
-          "processing" => "Submitting to App Store Connect"
-        }
-        label = labels[status]
+        label = status_labels[status]
         puts "  #{label}..." if label
+      end
+
+      def status_labels
+        if android?
+          {
+            "queued" => "Queued",
+            "building" => "Building Android AAB",
+            "processing" => "Uploading to Play Internal Testing"
+          }
+        else
+          {
+            "queued" => "Queued",
+            "building" => "Building",
+            "processing" => "Submitting to App Store Connect"
+          }
+        end
+      end
+
+      def success_destination_message(data)
+        platform = data["platform"] || requested_platform
+        case platform
+        when "android"
+          "Your build is being uploaded to Play Internal Testing."
+        else
+          "Your build is being submitted to TestFlight."
+        end
+      end
+
+      def parse_platform(argv)
+        return "android" if argv.include?("--android")
+
+        flag = argv.find { |a| a.start_with?("--platform=") }
+        return flag.split("=", 2).last if flag
+
+        "ios"
+      end
+
+      def requested_platform
+        @platform
+      end
+
+      def android?
+        @platform == "android"
+      end
+
+      def build_payload
+        payload = { gem_version: RubyNative::VERSION }
+        payload[:platform] = @platform unless @platform == "ios"
+        payload
       end
 
       # --- App linking ---

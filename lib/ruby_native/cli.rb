@@ -26,7 +26,7 @@ module RubyNative
         puts "Usage: ruby_native <command>"
         puts ""
         puts "Commands:"
-        puts "  deploy        Trigger an iOS build"
+        puts "  deploy        Trigger an iOS build (use --android for Android)"
         puts "  login         Authenticate with Ruby Native"
         puts "  logout        Remove stored credentials"
         puts "  preview       Start a tunnel and display a QR code"
