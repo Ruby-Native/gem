@@ -6,7 +6,7 @@ class RubyNative::Screenshots::SessionsControllerTest < ActionDispatch::Integrat
   def setup
     @sign_in_calls = 0
     RubyNative.screenshot_key = KEY
-    RubyNative.screenshot_sign_in = ->(_controller) { @sign_in_calls += 1 }
+    RubyNative.screenshot_sign_in = ->(_helper) { @sign_in_calls += 1 }
   end
 
   def teardown
@@ -97,5 +97,26 @@ class RubyNative::Screenshots::SessionsControllerTest < ActionDispatch::Integrat
 
     assert_response :redirect
     assert_redirected_to "/"
+  end
+
+  # Regression: in Rails 8.1 `cookies` is private on `ActionController::Base`,
+  # so the lambda used to fail with `NoMethodError` when it tried to set a
+  # signed cookie. The helper exposes `cookies` publicly so customer code
+  # like `helper.cookies.signed.permanent[:foo] = ...` works without
+  # `controller.send(:cookies)`.
+  def test_helper_exposes_writable_cookies
+    RubyNative.screenshot_sign_in = ->(helper) {
+      helper.cookies.signed.permanent[:fake_user_session_id] = {
+        value: "42",
+        httponly: true,
+        same_site: :lax
+      }
+    }
+
+    get "/native/screenshots/session", params: {ruby_native_screenshot_key: KEY}
+
+    assert_response :redirect
+    set_cookie = response.headers["set-cookie"].to_s
+    assert set_cookie.include?("fake_user_session_id"), "Expected helper.cookies.signed write to set fake_user_session_id"
   end
 end

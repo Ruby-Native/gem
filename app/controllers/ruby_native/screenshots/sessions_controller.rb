@@ -27,7 +27,7 @@ module RubyNative
           return
         end
 
-        RubyNative.screenshot_sign_in.call(self)
+        RubyNative.screenshot_sign_in.call(SignInHelper.new(self))
 
         cookies[:_ruby_native_screenshot_session] = {
           value: "1",

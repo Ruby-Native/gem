@@ -10,6 +10,7 @@ require "ruby_native/iap/verifiable"
 require "ruby_native/iap/decodable"
 require "ruby_native/iap/normalizable"
 require "ruby_native/iap/apple_webhook_processor"
+require "ruby_native/screenshots/sign_in_helper"
 require "ruby_native/engine"
 
 module RubyNative
