@@ -79,6 +79,26 @@ The companion app persists the scanned URL across launches. Long-press the app i
 - `GET /native/config` - returns the YAML config as JSON
 - `POST /native/push/devices` - registers a push notification token (requires `current_user` from host app)
 
+## Push notifications
+
+Delivery uses the companion `action_push_native` gem. Ruby Native owns the registration handshake (the `native_push_tag` helper prompts for permission, `/native/push/devices` stores the token) and the tap-handling conventions on the native side.
+
+When sending a push, two destination keys are supported via `with_data`:
+
+- `path` — internal route appended to your base URL and loaded in the in-app WebView (e.g. `/sources/42`).
+- `url` — full external URL opened in `SFSafariViewController`, leaving the WebView in place behind it (e.g. `https://dashboard.stripe.com/payments/pi_abc`).
+
+If both are present, `url` wins. `http` and `https` URLs open in `SFSafariViewController`; other valid schemes (`mailto:`, `tel:`, `maps:`, third-party app schemes, etc.) hand off to the appropriate app via `UIApplication.open`. Malformed `url` strings are dropped (the tap does not fall back to `path`).
+
+```ruby
+ApplicationPushNotification
+  .with_data(path: source_path(source), url: notification.external_url)
+  .new(title: "New payment", body: "$49.99 from joe@example.com")
+  .deliver_later_to(user.push_devices)
+```
+
+For model/migration setup, see [action_push_native](https://github.com/basecamp/action_push_native).
+
 ## Normal and Advanced Modes
 
 Normal Mode works with any frontend framework and requires no JavaScript. You get tabs, form page marking, push notifications, and history management.

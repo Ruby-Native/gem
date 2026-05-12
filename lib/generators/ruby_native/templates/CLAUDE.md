@@ -129,6 +129,26 @@ The gem auto-mounts at `/native`. No route configuration needed.
 - `GET /native/config` returns the YAML config as JSON
 - `POST /native/push/devices` registers a push notification device token
 
+## Push notifications
+
+Delivery uses the companion `action_push_native` gem. Ruby Native owns the registration (the `native_push_tag` helper prompts for permission, `/native/push/devices` stores the token) and defines the tap conventions on the native side.
+
+Two destination keys are supported via `with_data`:
+
+- `path` — internal route appended to your base URL, loaded in the WebView.
+- `url` — full external URL, opened in `SFSafariViewController`.
+
+If both are present, `url` wins. `http` and `https` open in `SFSafariViewController`; other valid schemes (`mailto:`, `tel:`, `maps:`, third-party app schemes) open via `UIApplication.open`. Malformed `url` does not fall back to `path`.
+
+```ruby
+ApplicationPushNotification
+  .with_data(path: source_path(source), url: notification.external_url)
+  .new(title: "New payment", body: "$49.99 from joe@example.com")
+  .deliver_later_to(user.push_devices)
+```
+
+For model/migration setup, see the [action_push_native](https://github.com/basecamp/action_push_native) README.
+
 ## CLI
 
 ### Deploy from CI
