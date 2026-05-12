@@ -6,16 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
-## [0.9.1] - 2026-05-12
-
 ### Fixed
 
 - **`screenshot_sign_in` lambda now receives a helper object instead of the raw controller.** In Rails 8.1, `cookies` is private on `ActionController::Base`, so the previous `controller.cookies.signed.permanent[...] = ...` pattern raised `NoMethodError` and `/native/screenshots/session` returned 500. The lambda is now yielded a small helper exposing public `cookies`, `request`, and `session` accessors. **Breaking-but-allowed:** update your initializer's lambda parameter to a name like `helper` and call `helper.cookies` / `helper.request` / `helper.session` instead of `controller.cookies` etc. The 0.9.0 API had no production users to migrate.
-
-### Added
-
-- **`icons:` option for per-platform icon names.** Pass `icons: { ios:, android: }` alongside the existing `icon:` string on navbar buttons, menu items, FABs, and tabs to use platform-specific icon identifiers. Resolves via the native platform parsed from the Ruby Native UA, falling back to `icon:` when the platform-specific value is missing. Available in the ERB helpers, the React package, and the Vue package. Motivated by Android needing Material Symbols names (e.g. `coffee`, `shopping_bag`) instead of the SF Symbols identifiers (`cup.and.saucer`, `bag`) that work on iOS. Additive: existing configs using `icon:` keep working unchanged.
-- **`ruby_native deploy --android` triggers an Android cloud build instead of iOS.** Polling and success messaging adapt to Play Internal Testing. Pass `--platform=ios|android|all` for explicit control; default behavior is unchanged.
 
 ## [0.9.0] - 2026-05-05
 
