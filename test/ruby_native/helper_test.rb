@@ -404,6 +404,12 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_equal "success", data[:native_haptic]
   end
 
+  def test_native_review_tag
+    html = native_review_tag
+    assert_includes html, 'data-native-review'
+    assert_includes html, 'hidden'
+  end
+
   private
 
   def request

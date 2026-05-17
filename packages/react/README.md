@@ -35,6 +35,7 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeTabs` - show the native tab bar
 - `NativePush` - request push notification permission
 - `NativeForm` - mark the current page as a form so back navigation skips it
+- `NativeReview` - ask for an App Store review prompt when the page loads
 - `NativeNavbar` - native navigation bar with title and buttons
 - `NativeButton` - native nav bar button (icon, title, href, or click target)
 - `NativeMenuItem` - item inside a native menu

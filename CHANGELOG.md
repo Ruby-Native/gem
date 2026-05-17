@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **In-app review prompts.** New `native_review_tag` helper (and `NativeReview` component for React and Vue) asks iOS to show the [App Store rating prompt](https://developer.apple.com/documentation/storekit/requesting-app-store-reviews) when the page loads. Apple throttles when it actually appears, so it is safe to render anywhere; it is also suppressed during screenshot runs.
+
 ## [0.9.2] - 2026-05-17
 
 ### Added

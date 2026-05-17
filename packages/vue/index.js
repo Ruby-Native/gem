@@ -43,6 +43,13 @@ export const NativeForm = defineComponent({
   }
 })
 
+export const NativeReview = defineComponent({
+  name: "NativeReview",
+  render() {
+    return h("div", { "data-native-review": true, hidden: true })
+  }
+})
+
 export const NativeNavbar = defineComponent({
   name: "NativeNavbar",
   props: { title: { type: String, default: "" } },

@@ -73,6 +73,18 @@ module RubyNative
       data
     end
 
+    # Renders a signal element that asks the app to request an App Store
+    # rating from the user. The system decides whether to actually show the
+    # prompt (Apple throttles it to a few times per year), so it is safe to
+    # render this on any page where a review would be welcome, like a
+    # confirmation screen after the user finishes something worthwhile.
+    #
+    # See Apple's docs on requesting App Store reviews:
+    # https://developer.apple.com/documentation/storekit/requesting-app-store-reviews
+    def native_review_tag
+      tag.div(data: { native_review: true }, hidden: true)
+    end
+
     # Picks the right icon name for the current native platform. Accepts the
     # single `icon:` form (applied to every platform) and/or the `icons:` hash
     # form (`{ ios: "...", android: "..." }`). When both are given, a matching

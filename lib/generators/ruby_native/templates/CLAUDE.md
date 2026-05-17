@@ -89,6 +89,7 @@ Use these in your layouts and views:
 - `native_tabs_tag` renders a signal element that tells the app to show the tab bar. Only include it on pages where tabs should appear.
 - `native_form_tag` marks the page as a form. The app uses this to skip form pages when navigating back.
 - `native_push_tag` requests push notification permission from the user.
+- `native_review_tag` asks the app to show the App Store rating prompt when the page loads. The system throttles how often the prompt appears (and shows nothing in TestFlight builds), so it is safe to render on any page where a review would be welcome. It is automatically suppressed during App Store screenshot runs.
 
 Signal elements are hidden `<div>` tags. Place them in the `<body>`, not the `<head>`.
 

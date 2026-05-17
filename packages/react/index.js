@@ -31,6 +31,10 @@ export function NativeForm() {
   return createElement("div", { "data-native-form": true, hidden: true })
 }
 
+export function NativeReview() {
+  return createElement("div", { "data-native-review": true, hidden: true })
+}
+
 export function NativeNavbar({ title = "", children }) {
   return createElement("div", { "data-native-navbar": title, hidden: true }, children)
 }
