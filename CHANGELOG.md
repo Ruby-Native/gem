@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`icons:` option for per-platform icon names.** Pass `icons: { ios:, android: }` alongside the existing `icon:` string on navbar buttons, menu items, FABs, and tabs to use platform-specific icon identifiers. Resolves via the native platform parsed from the Ruby Native UA, falling back to `icon:` when the platform-specific value is missing. Available in the ERB helpers, the React package, and the Vue package. Motivated by Android needing Material Symbols names (e.g. `coffee`, `shopping_bag`) instead of the SF Symbols identifiers (`cup.and.saucer`, `bag`) that work on iOS. Additive: existing configs using `icon:` keep working unchanged.
 - **`ruby_native deploy --android` triggers an Android cloud build instead of iOS.** Polling and success messaging adapt to Play Internal Testing. Pass `--platform=ios|android|all` for explicit control; default behavior is unchanged.
 
+### Fixed
+
+- **Rails 8.1 compatibility for the gem's middleware initializers.** Rails 8.1 replaced the initializer array with a sorted graph, which could place `ruby_native.oauth_middleware` and `ruby_native.tunnel_cookie_middleware` after the middleware stack was already frozen. That broke the host app entirely, including `bin/rails middleware` and every generator. Both initializers now run `before: :build_middleware_stack` so they are ordered correctly. No config changes needed.
+
 ## [0.9.1] - 2026-05-12
 
 ### Fixed
