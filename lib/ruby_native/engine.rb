@@ -38,11 +38,11 @@ module RubyNative
       end
     end
 
-    initializer "ruby_native.oauth_middleware" do |app|
+    initializer "ruby_native.oauth_middleware", before: :build_middleware_stack do |app|
       app.middleware.insert_before ActionDispatch::Cookies, RubyNative::OAuthMiddleware
     end
 
-    initializer "ruby_native.tunnel_cookie_middleware" do |app|
+    initializer "ruby_native.tunnel_cookie_middleware", before: :build_middleware_stack do |app|
       if Rails.env.development?
         app.middleware.insert_before ActionDispatch::Cookies, RubyNative::TunnelCookieMiddleware
       end
