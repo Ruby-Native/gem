@@ -13,36 +13,44 @@ module RubyNative
       PUBLIC_NAMESERVERS = ["1.1.1.1", "8.8.8.8"].freeze
 
       def initialize(argv)
+        @url = parse_option(argv, "--url")
         @port = parse_port(argv)
+        @upstream = @url || "http://localhost:#{@port}"
       end
 
       def run
         check_cloudflared!
-        check_local_server!
+        check_upstream!
         start_tunnel
       end
 
       private
 
-      def check_local_server!
-        uri = URI("http://localhost:#{@port}#{CONFIG_PATH}")
+      def check_upstream!
+        uri = URI("#{@upstream}#{CONFIG_PATH}")
         response = fetch_config_response(uri)
 
         return if response.is_a?(Net::HTTPSuccess)
 
-        puts "Rails server is running on port #{@port}, but #{CONFIG_PATH} returned #{response.code}."
+        puts "Rails server is reachable at #{@upstream}, but #{CONFIG_PATH} returned #{response.code}."
         puts ""
         puts "Make sure the ruby_native gem is installed and mounted:"
         puts "  https://rubynative.com/docs/install"
         exit 1
       rescue Errno::ECONNREFUSED
-        puts "Nothing is running on port #{@port}."
-        puts ""
-        puts "Start your Rails server in another terminal:"
-        puts "  bin/rails server -p #{@port}"
+        if @url
+          puts "Could not connect to #{@url}."
+          puts ""
+          puts "Make sure your Rails server is reachable at that URL."
+        else
+          puts "Nothing is running on port #{@port}."
+          puts ""
+          puts "Start your Rails server in another terminal:"
+          puts "  bin/rails server -p #{@port}"
+        end
         exit 1
       rescue => e
-        puts "Could not reach http://localhost:#{@port}#{CONFIG_PATH}: #{e.message}"
+        puts "Could not reach #{@upstream}#{CONFIG_PATH}: #{e.message}"
         exit 1
       end
 
@@ -100,12 +108,13 @@ module RubyNative
       end
 
       def parse_port(argv)
-        index = argv.index("--port")
-        if index
-          argv[index + 1]&.to_i || 3000
-        else
-          3000
-        end
+        value = parse_option(argv, "--port")
+        value ? value.to_i : 3000
+      end
+
+      def parse_option(argv, flag)
+        index = argv.index(flag)
+        index ? argv[index + 1] : nil
       end
 
       def check_cloudflared!
@@ -121,12 +130,16 @@ module RubyNative
       end
 
       def start_tunnel
-        puts "Starting tunnel to http://localhost:#{@port}..."
-        puts "Make sure your Rails server is running on port #{@port} in another terminal."
+        puts "Starting tunnel to #{@upstream}..."
+        if @url
+          puts "Make sure your Rails server is reachable at #{@url}."
+        else
+          puts "Make sure your Rails server is running on port #{@port} in another terminal."
+        end
         puts ""
 
         stdin, stdout_err, wait_thread = Open3.popen2e(
-          "cloudflared", "tunnel", "--url", "http://localhost:#{@port}"
+          "cloudflared", "tunnel", "--url", @upstream
         )
         stdin.close
 
@@ -175,7 +188,11 @@ module RubyNative
         puts url
         puts ""
         puts "Scan the QR code or paste the URL into the Ruby Native Preview app."
-        puts "Keep this running and your Rails server on port #{@port} in another terminal."
+        if @url
+          puts "Keep this running and your Rails server reachable at #{@url}."
+        else
+          puts "Keep this running and your Rails server on port #{@port} in another terminal."
+        end
         puts "Press Ctrl+C to stop."
       end
 

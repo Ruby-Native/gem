@@ -8,13 +8,13 @@ class PreviewTest < Minitest::Test
 
   def test_passes_when_config_endpoint_returns_200
     stub_http_response(Net::HTTPSuccess.new("1.1", "200", "OK"))
-    @preview.send(:check_local_server!)
+    @preview.send(:check_upstream!)
   end
 
   def test_exits_when_config_endpoint_returns_404
     stub_http_response(Net::HTTPNotFound.new("1.1", "404", "Not Found"))
     out, _err = capture_io do
-      assert_raises(SystemExit) { @preview.send(:check_local_server!) }
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
     end
     assert_match(/returned 404/, out)
     assert_match(/installed and mounted/, out)
@@ -23,15 +23,24 @@ class PreviewTest < Minitest::Test
   def test_exits_when_server_not_running
     stub_http_raise(Errno::ECONNREFUSED)
     out, _err = capture_io do
-      assert_raises(SystemExit) { @preview.send(:check_local_server!) }
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
     end
     assert_match(/Nothing is running on port 3000/, out)
+  end
+
+  def test_exits_when_url_unreachable
+    preview = RubyNative::CLI::Preview.new(["--url", "https://rails.example.orb.local"])
+    preview.define_singleton_method(:fetch_config_response) { |_uri| raise Errno::ECONNREFUSED }
+    out, _err = capture_io do
+      assert_raises(SystemExit) { preview.send(:check_upstream!) }
+    end
+    assert_match(%r{Could not connect to https://rails\.example\.orb\.local}, out)
   end
 
   def test_exits_on_unexpected_error
     stub_http_raise(SocketError.new("getaddrinfo failed"))
     out, _err = capture_io do
-      assert_raises(SystemExit) { @preview.send(:check_local_server!) }
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
     end
     assert_match(/Could not reach/, out)
   end
