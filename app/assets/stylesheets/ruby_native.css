@@ -2,18 +2,22 @@
   display: none !important;
 }
 
+/* Android's WebView doesn't populate env(safe-area-inset-*) from system bars
+   (only display cutouts), so the native shell pushes the real top/bottom
+   system bar heights into these CSS variables. iOS leaves the variables
+   undefined and falls back to env(), which works there. */
 .native-inset-top::before,
 .native-inset::before {
   content: "";
   display: block;
-  height: env(safe-area-inset-top);
+  height: var(--ruby-native-safe-area-inset-top, env(safe-area-inset-top));
 }
 
 .native-inset-bottom::after,
 .native-inset::after {
   content: "";
   display: block;
-  height: env(safe-area-inset-bottom);
+  height: var(--ruby-native-safe-area-inset-bottom, env(safe-area-inset-bottom));
 }
 
 .native-back-button {
