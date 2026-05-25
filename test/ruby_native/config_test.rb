@@ -25,27 +25,6 @@ class RubyNative::ConfigTest < Minitest::Test
     assert_equal "#007AFF", appearance[:tint_color]
   end
 
-  def test_app_name_defaults_when_app_key_missing
-    with_config(appearance: {tint_color: "#007AFF"}, tabs: []) do
-      RubyNative.load_config
-      assert_equal "Ruby Native", RubyNative.config[:app][:name]
-    end
-  end
-
-  def test_app_name_defaults_when_name_key_missing
-    with_config(app: {mode: "normal"}, appearance: {tint_color: "#007AFF"}, tabs: []) do
-      RubyNative.load_config
-      assert_equal "Ruby Native", RubyNative.config[:app][:name]
-    end
-  end
-
-  def test_app_name_not_overwritten_when_present
-    with_config(app: {name: "My App"}, appearance: {tint_color: "#007AFF"}, tabs: []) do
-      RubyNative.load_config
-      assert_equal "My App", RubyNative.config[:app][:name]
-    end
-  end
-
   def test_entry_path_defaults_to_first_tab_path
     with_config(app: {}, tabs: [{title: "Inbox", path: "/inbox", icon: "tray"}]) do
       RubyNative.load_config

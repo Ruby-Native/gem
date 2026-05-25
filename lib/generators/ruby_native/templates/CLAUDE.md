@@ -129,6 +129,23 @@ The gem auto-mounts at `/native`. No route configuration needed.
 
 - `GET /native/config` returns the YAML config as JSON
 - `POST /native/push/devices` registers a push notification device token
+- `GET /.well-known/apple-app-site-association` returns the iOS associated-domains file when `ios.bundle_id` and `ios.team_id` are set (see Linked domains below)
+
+## Linked domains
+
+Tapping a link to your site opens the app instead of Safari, and saved passwords from your site autofill in the app's web views. Add your iOS identifiers to `config/ruby_native.yml`:
+
+```yaml
+ios:
+  bundle_id: com.example.myapp
+  team_id: ABCD123456
+```
+
+These are the same values you entered in the Ruby Native dashboard during Apple onboarding. The gem then serves `/.well-known/apple-app-site-association` and the build pipeline includes the entitlement automatically.
+
+Apple caches the file aggressively. After the first install, changes can take up to 24 hours to propagate via Apple's CDN.
+
+Full reference: https://rubynative.com/docs/linked-domains
 
 ## Push notifications
 

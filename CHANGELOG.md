@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Linked domains for iOS.** Tapping a link to your site now opens the app instead of Safari, and saved passwords from your site autofill in the app's web views. Opt-in by adding `ios.bundle_id` and `ios.team_id` to `config/ruby_native.yml`; the gem then serves `/.well-known/apple-app-site-association` automatically and the build pipeline includes the entitlement in every iOS build. See [Linked domains](https://rubynative.com/docs/linked-domains).
+
+### Changed
+
+- **Install generator template** revamped with a uniform documentation style. Every field now has a block comment above it describing what it does, listing the options with their meanings, and noting the default. Existing apps are unaffected; only `rails generate ruby_native:install` output changes.
+
+### Removed
+
+- **`app.name` default.** `RubyNative.config[:app][:name]` no longer falls back to `"Ruby Native"` when missing from the YAML — the value was never read anywhere. If you somehow relied on the default, set the key explicitly.
+
 ## [0.9.4] - 2026-05-20
 
 ### Added

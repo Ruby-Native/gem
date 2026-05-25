@@ -50,6 +50,7 @@ module RubyNative
 
     initializer "ruby_native.routes" do |app|
       app.routes.prepend do
+        get "/.well-known/apple-app-site-association", to: "ruby_native/aasa#show"
         mount RubyNative::Engine, at: "/native"
       end
     end
