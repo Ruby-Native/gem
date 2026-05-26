@@ -35,8 +35,10 @@ export function NativeReview() {
   return createElement("div", { "data-native-review": true, hidden: true })
 }
 
-export function NativeNavbar({ title = "", children }) {
-  return createElement("div", { "data-native-navbar": title, hidden: true }, children)
+export function NativeNavbar({ title = "", pullToRefresh = true, children }) {
+  const props = { "data-native-navbar": title, hidden: true }
+  if (!pullToRefresh) props["data-native-pull-to-refresh"] = "false"
+  return createElement("div", props, children)
 }
 
 export function NativeButton({ position = "trailing", icon, icons, title, href, click, selected, children }) {

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Pull-to-refresh on pages with a native navbar.** Any page that renders `native_navbar_tag` now reloads when the user pulls down from the top, on both iOS and Android Normal Mode. The reload uses the current URL, which means Turbo and Inertia pages refresh correctly without any extra work. Pass `pull_to_refresh: false` to `native_navbar_tag` on a specific page to opt out. Advanced Mode already supported pull-to-refresh through Hotwire Native, so no change is needed there.
 - **Linked domains for iOS.** Tapping a link to your site now opens the app instead of Safari, and saved passwords from your site autofill in the app's web views. Opt-in by adding `ios.bundle_id` and `ios.team_id` to `config/ruby_native.yml`; the gem then serves `/.well-known/apple-app-site-association` automatically and the build pipeline includes the entitlement in every iOS build. See [Linked domains](https://rubynative.com/docs/linked-domains).
 
 ### Changed

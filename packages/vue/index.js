@@ -52,9 +52,14 @@ export const NativeReview = defineComponent({
 
 export const NativeNavbar = defineComponent({
   name: "NativeNavbar",
-  props: { title: { type: String, default: "" } },
+  props: {
+    title: { type: String, default: "" },
+    pullToRefresh: { type: Boolean, default: true }
+  },
   render() {
-    return h("div", { "data-native-navbar": this.title, hidden: true }, this.$slots.default?.())
+    const props = { "data-native-navbar": this.title, hidden: true }
+    if (!this.pullToRefresh) props["data-native-pull-to-refresh"] = "false"
+    return h("div", props, this.$slots.default?.())
   }
 })
 

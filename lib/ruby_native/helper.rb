@@ -46,11 +46,13 @@ module RubyNative
       tag.div(data: data, hidden: true)
     end
 
-    def native_navbar_tag(title = nil, &block)
+    def native_navbar_tag(title = nil, pull_to_refresh: true, &block)
       builder = NavbarBuilder.new(self)
       capture(builder, &block) if block
 
-      tag.div(data: { native_navbar: title.to_s }, hidden: true) { builder.to_html }
+      data = { native_navbar: title.to_s }
+      data[:native_pull_to_refresh] = "false" unless pull_to_refresh
+      tag.div(data: data, hidden: true) { builder.to_html }
     end
 
     def native_fab_tag(icon: nil, icons: nil, href: nil, click: nil)

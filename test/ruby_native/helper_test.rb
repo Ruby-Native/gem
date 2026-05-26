@@ -157,6 +157,16 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'hidden'
   end
 
+  def test_native_navbar_tag_pull_to_refresh_default
+    html = native_navbar_tag("Today")
+    refute_includes html, "data-native-pull-to-refresh"
+  end
+
+  def test_native_navbar_tag_pull_to_refresh_disabled
+    html = native_navbar_tag("Today", pull_to_refresh: false)
+    assert_includes html, 'data-native-pull-to-refresh="false"'
+  end
+
   def test_native_navbar_tag_without_title
     html = native_navbar_tag
     assert_includes html, 'data-native-navbar=""'
