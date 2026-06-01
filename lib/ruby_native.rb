@@ -41,5 +41,20 @@ module RubyNative
     self.config[:app] ||= {}
     self.config[:app][:entry_path] ||= self.config.dig(:tabs, 0, :path) || "/"
     self.config[:auth] ||= {}
+    backfill_tab_icons
+  end
+
+  # Mirrors per-platform `icons:` into the legacy flat `icon:` field so native
+  # binaries that only read `tab.icon` keep rendering an icon. Explicit `icon:`
+  # wins; otherwise falls back to `icons.ios`, then `icons.android`.
+  def self.backfill_tab_icons
+    Array(self.config[:tabs]).each do |tab|
+      next unless tab.is_a?(Hash)
+
+      icons = tab[:icons]
+      next unless icons.is_a?(Hash)
+
+      tab[:icon] ||= icons[:ios] || icons[:android]
+    end
   end
 end

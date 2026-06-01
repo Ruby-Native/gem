@@ -46,6 +46,27 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  def test_tab_icon_kept_when_explicitly_set
+    with_config(app: {}, tabs: [{title: "Home", path: "/", icon: "house", icons: {ios: "house.fill", android: "home"}}]) do
+      RubyNative.load_config
+      assert_equal "house", RubyNative.config[:tabs].first[:icon]
+    end
+  end
+
+  def test_tab_icon_backfilled_from_icons_ios
+    with_config(app: {}, tabs: [{title: "Profile", path: "/profile", icons: {ios: "person.circle", android: "account_circle"}}]) do
+      RubyNative.load_config
+      assert_equal "person.circle", RubyNative.config[:tabs].first[:icon]
+    end
+  end
+
+  def test_tab_icon_backfilled_from_icons_android_when_no_ios
+    with_config(app: {}, tabs: [{title: "Profile", path: "/profile", icons: {android: "account_circle"}}]) do
+      RubyNative.load_config
+      assert_equal "account_circle", RubyNative.config[:tabs].first[:icon]
+    end
+  end
+
   private
 
   def with_config(config)

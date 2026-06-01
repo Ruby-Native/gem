@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Tabs that use only `icons:` now keep working on older native binaries.** When a tab defines the per-platform `icons: { ios:, android: }` form without a flat `icon:`, the served config now also populates the legacy `icon` field from `icons.ios` (falling back to `icons.android`). Native binaries that predate the `icons:` option read only `tab.icon`, so without this they showed no tab icon. An explicit `icon:` is always preserved.
+
 ## [0.10.0] - 2026-05-25
 
 ### Added
