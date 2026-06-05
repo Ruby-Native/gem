@@ -25,13 +25,43 @@ class RubyNative::AasaControllerTest < ActionDispatch::IntegrationTest
     assert_equal({
       "applinks" => {
         "details" => [
-          { "appIDs" => [ "ABCD123456.com.example.test" ], "components" => [ { "/" => "*" } ] }
+          {
+            "appIDs" => [ "ABCD123456.com.example.test" ],
+            "components" => [
+              { "/" => "/auth/test_provider*", "exclude" => true },
+              { "/" => "*" }
+            ]
+          }
         ]
       },
       "webcredentials" => {
         "apps" => [ "ABCD123456.com.example.test" ]
       }
     }, body)
+  end
+
+  def test_excludes_each_configured_oauth_path_before_the_catch_all
+    RubyNative.config = RubyNative.config.deep_merge(
+      auth: { oauth_paths: [ "/users/auth/google_oauth2", "/users/auth/github" ] }
+    )
+
+    get PATH
+
+    components = JSON.parse(response.body).dig("applinks", "details", 0, "components")
+    assert_equal [
+      { "/" => "/users/auth/google_oauth2*", "exclude" => true },
+      { "/" => "/users/auth/github*", "exclude" => true },
+      { "/" => "*" }
+    ], components
+  end
+
+  def test_serves_only_the_catch_all_without_oauth_paths
+    RubyNative.config = RubyNative.config.deep_merge(auth: { oauth_paths: nil })
+
+    get PATH
+
+    components = JSON.parse(response.body).dig("applinks", "details", 0, "components")
+    assert_equal [ { "/" => "*" } ], components
   end
 
   def test_returns_404_when_ios_section_is_missing

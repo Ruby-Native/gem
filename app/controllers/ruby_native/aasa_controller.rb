@@ -12,13 +12,30 @@ module RubyNative
       render json: {
         applinks: {
           details: [
-            { appIDs: [ app_id ], components: [ { "/": "*" } ] }
+            { appIDs: [ app_id ], components: oauth_exclusions + [ { "/": "*" } ] }
           ]
         },
         webcredentials: {
           apps: [ app_id ]
         }
       }
+    end
+
+    private
+
+    # OAuth redirects must stay inside ASWebAuthenticationSession. With the
+    # catch-all component alone, iOS treats the provider's redirect back to
+    # the app's domain (e.g. /users/auth/google_oauth2/callback) as a
+    # universal link, breaks out of the auth session, and native sign-in
+    # fails. Excluding the configured OAuth paths keeps the OAuth round-trip
+    # inside the session. The trailing `*` matches across `/`, so a start
+    # path also covers its `/callback` child. Components are evaluated in
+    # order and the first match wins, so exclusions go before the catch-all.
+    # See https://github.com/ruby-native/gem/issues/59.
+    def oauth_exclusions
+      Array(RubyNative.config&.dig(:auth, :oauth_paths)).map do |path|
+        { "/": "#{path}*", exclude: true }
+      end
     end
   end
 end
