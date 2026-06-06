@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Advanced Mode navbar buttons now appear on the first paint after a modal dismisses.** When a form submitted inside a modal redirected to a new screen (for example, adding a record from a modal and landing on it), the destination's navbar buttons were dropped because its view controller wasn't on screen yet when the signal arrived. They only showed up after a manual pull-to-refresh. The navbar now retries briefly until the screen settles. A normal push was unaffected.
+
 ## [0.10.2] - 2026-06-01
 
 ### Added
