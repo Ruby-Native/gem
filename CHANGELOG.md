@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- **Advanced Mode navbar buttons now appear on the first paint after a modal dismisses.** When a form submitted inside a modal redirected to a new screen (for example, adding a record from a modal and landing on it), the destination's navbar buttons were dropped because its view controller wasn't on screen yet when the signal arrived. They only showed up after a manual pull-to-refresh. The navbar now retries briefly until the screen settles. A normal push was unaffected.
-- **OAuth callback paths in `config/ruby_native.yml` no longer trip a native sign-in loop.** When `auth.oauth_paths` listed a provider's callback (for example `/users/auth/google_oauth2/callback`) next to its authorize path, the iOS app treated the callback as a sign-in entry point and derived the provider from the last path segment, launching a broken flow for a provider named `callback`. The gem now drops any callback path that duplicates a listed authorize path and logs a warning. List only authorize paths; the callback round-trip is handled automatically by the OAuth middleware.
+- **Advanced Mode navbar buttons now appear on the first paint after a modal dismisses.** When a modal's form redirected to a new screen, the destination's buttons were dropped until a manual pull-to-refresh because the view controller wasn't on screen when the signal arrived. The navbar now retries briefly until the screen settles.
+- **OAuth callback paths in `auth.oauth_paths` no longer trip a native sign-in loop.** Listing a provider's callback next to its authorize path made the iOS app treat the callback as a sign-in entry point and loop. The gem now drops any callback that duplicates a listed authorize path and warns; list only authorize paths.
 
 ## [0.10.2] - 2026-06-01
 
