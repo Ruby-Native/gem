@@ -5,7 +5,8 @@ class RubyNative::AasaControllerTest < ActionDispatch::IntegrationTest
 
   def setup
     @original_config = RubyNative.config
-    RubyNative.config = (RubyNative.config || {}).deep_merge(
+    RubyNative.load_config
+    RubyNative.config = RubyNative.config.deep_merge(
       ios: { bundle_id: "com.example.test", team_id: "ABCD123456" }
     )
   end

@@ -97,5 +97,6 @@ class RubyNative::ConfigTest < Minitest::Test
     yield
   ensure
     path.write(original)
+    RubyNative.load_config
   end
 end
