@@ -67,6 +67,27 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  def test_oauth_callback_path_duplicating_authorize_path_is_stripped
+    with_config(app: {}, tabs: [], auth: {oauth_paths: ["/users/auth/google_oauth2", "/users/auth/google_oauth2/callback"]}) do
+      RubyNative.load_config
+      assert_equal ["/users/auth/google_oauth2"], RubyNative.config[:auth][:oauth_paths]
+    end
+  end
+
+  def test_oauth_paths_without_callbacks_are_unchanged
+    with_config(app: {}, tabs: [], auth: {oauth_paths: ["/auth/google", "/auth/github"]}) do
+      RubyNative.load_config
+      assert_equal ["/auth/google", "/auth/github"], RubyNative.config[:auth][:oauth_paths]
+    end
+  end
+
+  def test_oauth_callback_without_a_matching_authorize_path_is_kept
+    with_config(app: {}, tabs: [], auth: {oauth_paths: ["/users/auth/every/callback"]}) do
+      RubyNative.load_config
+      assert_equal ["/users/auth/every/callback"], RubyNative.config[:auth][:oauth_paths]
+    end
+  end
+
   private
 
   def with_config(config)

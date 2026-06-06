@@ -74,7 +74,8 @@ tabs:
 #   team_id: ABCD123456
 
 # Enable OAuth. Each path triggers a native ASWebAuthenticationSession
-# on iOS instead of an in-app web view.
+# on iOS instead of an in-app web view. List only the authorize path for each
+# provider, not its callback; the callback is handled automatically.
 # https://rubynative.com/docs/oauth
 # auth:
 #   oauth_paths:
