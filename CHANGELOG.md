@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **The floating action button (`native_fab_tag`) now follows the visible tab.** In tab-based apps it could vanish when you returned to its tab and then stick on every tab after a pull-to-refresh, in both Advanced and Normal Mode.
+- **The Advanced Mode navbar submit button keeps its enabled state after a form submit in another tab.** A background tab reloading could repoint the `navbar.submit_button` disabled toggle and leave the visible form's button stuck.
+
 ## [0.10.3] - 2026-06-06
 
 ### Fixed
