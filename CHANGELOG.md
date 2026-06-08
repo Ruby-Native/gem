@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Changed
+
+- **Relaxed the `jwt` dependency to `>= 2.0, < 4`** so apps on jwt 3 (for example, anything using Intercom's JWT helper) can install the gem. The previous `~> 2.0` pin forced a resolution conflict. The Apple IAP webhook decoder now passes `algorithms: ["ES256"]`, which behaves identically on jwt 2 and 3.
+
 ### Fixed
 
 - **The floating action button (`native_fab_tag`) now follows the visible tab.** In tab-based apps it could vanish when you returned to its tab and then stick on every tab after a pull-to-refresh, in both Advanced and Normal Mode.

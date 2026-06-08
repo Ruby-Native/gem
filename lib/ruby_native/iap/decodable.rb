@@ -41,7 +41,7 @@ module RubyNative
       end
 
       def decode_and_verify_jws(jws)
-        JWT.decode(jws, nil, true, algorithm: "ES256") { |header|
+        JWT.decode(jws, nil, true, algorithms: ["ES256"]) { |header|
           verify_certificate_chain(header["x5c"])
         }.first
       end
