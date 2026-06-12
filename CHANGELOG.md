@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **The native tab bar no longer resets to the first tab during SPA navigation.** Inertia and Turbo briefly drop the `data-native-tabs` element on each page change; the iOS Normal Mode runtime now debounces the signal to ignore the transient drop.
 - **The floating action button (`native_fab_tag`) now follows the visible tab.** In tab-based apps it could vanish when you returned to its tab and then stick on every tab after a pull-to-refresh, in both Advanced and Normal Mode.
 - **The Advanced Mode navbar submit button keeps its enabled state after a form submit in another tab.** A background tab reloading could repoint the `navbar.submit_button` disabled toggle and leave the visible form's button stuck.
 
