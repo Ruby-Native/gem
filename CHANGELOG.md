@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **The floating action button and native nav bar now render in apps without a tab bar.** When `config/ruby_native.yml` had no `tabs:` section, the iOS bridge only reported native signals on pages that declared a tab bar, so a tab-less app's FAB and nav bar never appeared. The bridge now reports whenever any native signal is present (FAB, nav bar, form, or push), and the Normal Mode FAB anchors to the bottom safe area when there is no tab bar to sit above.
+- **A presented modal no longer removes the Advanced Mode FAB.** Opening a modal (a `/new` or `/edit` screen) whose page declared no FAB tore down the underlying tab's FAB, and dismissing the modal did not bring it back. The FAB is now keyed to the tab's own web view, so a modal session can no longer remove it.
+
 ## [0.10.4] - 2026-06-12
 
 ### Changed
