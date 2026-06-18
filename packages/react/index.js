@@ -90,3 +90,16 @@ export function NativeSubmitButton({ title = "Save", click = "[type='submit']" }
   })
 }
 
+export function NativeBadge({ count, home, tab }) {
+  if (count != null && home == null) home = count
+  if (count != null && tab == null) tab = count
+  const props = { "data-native-badge": "", hidden: true }
+  if (home != null) props["data-native-badge-home"] = home
+  if (tab != null) props["data-native-badge-tab"] = tab
+  return createElement("div", props)
+}
+
+export function nativeHaptic(feedback = "success", data = {}) {
+  return { ...data, "data-native-haptic": feedback }
+}
+

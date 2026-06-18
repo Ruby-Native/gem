@@ -157,3 +157,26 @@ export const NativeSubmitButton = defineComponent({
     })
   }
 })
+
+export const NativeBadge = defineComponent({
+  name: "NativeBadge",
+  props: {
+    count: { type: Number, default: undefined },
+    home: { type: Number, default: undefined },
+    tab: { type: Number, default: undefined }
+  },
+  render() {
+    let home = this.home
+    let tab = this.tab
+    if (this.count != null && home == null) home = this.count
+    if (this.count != null && tab == null) tab = this.count
+    const attrs = { "data-native-badge": "", hidden: true }
+    if (home != null) attrs["data-native-badge-home"] = home
+    if (tab != null) attrs["data-native-badge-tab"] = tab
+    return h("div", attrs)
+  }
+})
+
+export function nativeHaptic(feedback = "success", data = {}) {
+  return { ...data, "data-native-haptic": feedback }
+}

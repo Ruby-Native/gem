@@ -41,6 +41,15 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeMenuItem` - item inside a native menu
 - `NativeSubmitButton` - native "Save" button that submits a form
 - `NativeOverscroll` - per-page overscroll colors
+- `NativeBadge` - set the badge count on a home screen or tab bar icon
+
+## Helpers
+
+- `nativeHaptic(feedback = "success", data = {})` - returns props to spread onto a clickable element so tapping it triggers native haptic feedback:
+
+  ```jsx
+  <button {...nativeHaptic("success")}>Save</button>
+  ```
 
 ## Docs
 

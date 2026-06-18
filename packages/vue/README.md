@@ -39,6 +39,15 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeMenuItem` - item inside a native menu
 - `NativeSubmitButton` - native "Save" button that submits a form
 - `NativeOverscroll` - per-page overscroll colors
+- `NativeBadge` - set the badge count on a home screen or tab bar icon
+
+## Helpers
+
+- `nativeHaptic(feedback = "success", data = {})` - returns attributes to `v-bind` onto a clickable element so tapping it triggers native haptic feedback:
+
+  ```vue
+  <button v-bind="nativeHaptic('success')">Save</button>
+  ```
 
 ## Docs
 
