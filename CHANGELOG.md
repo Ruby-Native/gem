@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **The native error and offline screens are now customizable and localized.** Set per-state icons (`offline` for no connectivity, `generic` for any other load failure) in `config/ruby_native.yml` under `errors:`, using the same `icon:`/`icons:` form as tabs, and put title, message, and shared retry copy in your app's own locale files under the `ruby_native.errors.*` namespace. Copy follows the device language and falls back to bundled English, so you override only what you want.
+
 ## [0.10.6] - 2026-06-16
 
 ### Fixed

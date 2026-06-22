@@ -3,7 +3,7 @@ module RubyNative
     def show
       RubyNative.load_config if Rails.env.local?
       response.set_header("X-Ruby-Native-Version", RubyNative::VERSION)
-      render json: RubyNative.config
+      render json: RubyNative.config_as_json
     end
   end
 end
