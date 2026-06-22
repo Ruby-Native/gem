@@ -3,7 +3,8 @@
   "version": "0.10.6",
   "description": "React components for Ruby Native",
   "main": "index.js",
-  "files": ["index.js", "README.md"],
+  "types": "index.d.ts",
+  "files": ["index.js", "index.d.ts", "README.md"],
   "peerDependencies": {
     "react": ">=18",
     "@inertiajs/react": ">=2"

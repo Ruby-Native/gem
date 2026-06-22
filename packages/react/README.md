@@ -42,6 +42,15 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeSubmitButton` - native "Save" button that submits a form
 - `NativeOverscroll` - per-page overscroll colors
 - `NativeBadge` - set the badge count on a home screen or tab bar icon
+- `NativeFab` - floating action button (`icon`/`icons` required, plus `href` or `click`)
+- `NativeBackButton` - a visible button that pops the native navigation stack
+
+`NativeBackButton` renders a chevron by default and forwards any extra props (`className`, `aria-label`, `style`, ...) to the underlying `<button>`:
+
+```jsx
+<NativeBackButton aria-label="Go back" />
+<NativeBackButton>Back</NativeBackButton>
+```
 
 ## Helpers
 
@@ -50,6 +59,14 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
   ```jsx
   <button {...nativeHaptic("success")}>Save</button>
   ```
+
+- `nativePlatform()` - returns `"ios"`, `"android"`, or `null` (web / SSR), so you can branch on the native environment.
+- `nativePostMessage(message)` - send a message over the native bridge. Returns `false` (a no-op) on the web, during SSR, or before the wrapper is ready.
+- `nativeBack()` - pop the native navigation stack (what `NativeBackButton` calls).
+
+## TypeScript
+
+Type declarations ship with the package (`index.d.ts`) - no extra `@types` install needed.
 
 ## Docs
 

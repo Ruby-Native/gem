@@ -10,6 +10,26 @@ function rubyNativePlatform() {
   return null
 }
 
+// "ios" | "android" when running inside a Ruby Native wrapper, else null.
+export function nativePlatform() {
+  return rubyNativePlatform()
+}
+
+// Send a message over the native bridge. No-ops (returns false) on the web,
+// during SSR, or before the wrapper has injected `window.RubyNative`.
+export function nativePostMessage(message) {
+  if (typeof window === "undefined") return false
+  const bridge = window.RubyNative
+  if (!bridge || typeof bridge.postMessage !== "function") return false
+  bridge.postMessage(message)
+  return true
+}
+
+// Pop the native navigation stack. Mirrors `native_back_button_tag`.
+export function nativeBack() {
+  return nativePostMessage({ action: "back" })
+}
+
 function resolveIcon(icon, icons) {
   if (icons) {
     const platform = rubyNativePlatform()
@@ -97,6 +117,23 @@ export function NativeBadge({ count, home, tab }) {
   if (home != null) props["data-native-badge-home"] = home
   if (tab != null) props["data-native-badge-tab"] = tab
   return createElement("div", props)
+}
+
+// A visible back button that pops the native navigation stack on tap.
+// Renders a chevron by default; pass children to supply your own content.
+// Extra props (className, aria-label, style, ...) are forwarded to the button.
+export function NativeBackButton({ children, className, onClick, ...rest }) {
+  const classes = ["native-back-button", className].filter(Boolean).join(" ")
+  const handleClick = event => {
+    if (onClick) onClick(event)
+    if (!event.defaultPrevented) nativeBack()
+  }
+  const content = children != null ? children : createElement(
+    "svg",
+    { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, "aria-hidden": true },
+    createElement("path", { d: "M15.75 19.5L8.25 12l7.5-7.5", strokeLinecap: "round", strokeLinejoin: "round" })
+  )
+  return createElement("button", { type: "button", ...rest, className: classes, onClick: handleClick }, content)
 }
 
 export function nativeHaptic(feedback = "success", data = {}) {
