@@ -4,18 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **`navbar.share_button` adds a native share button to the nav bar.** Tapping it opens the iOS share sheet for the current page, or a custom `url:`.
+
+### Fixed
+
+- **Muted background videos no longer force fullscreen on iOS.** Web views now enable `allowsInlineMediaPlayback`, so `playsinline` video plays inline in both Normal and Advanced Mode.
+- **`[data-native-app]` is now reliably set on Android in Normal Mode.** The marker applies at document start, matching iOS, so CSS keyed to it (like `.native-hidden` and the safe-area inset fallbacks) takes effect.
+- **Microphone and camera capture (`getUserMedia`) now works on Android.** Media requests bridge to a native runtime permission instead of being silently denied, matching iOS; opt in per app with the usage descriptions in your app settings.
+
 ## [0.10.8] - 2026-06-22
 
 ### Added
 
-- **The native error and offline screens are now customizable and localized.** Set per-state icons (`offline` for no connectivity, `generic` for any other load failure) in `config/ruby_native.yml` under `errors:`, using the same `icon:`/`icons:` form as tabs, and put title, message, and shared retry copy in your app's own locale files under the `ruby_native.errors.*` namespace. Copy follows the device language and falls back to bundled English, so you override only what you want.
+- **The native error and offline screens are now customizable and localized.** Set per-state icons (`offline` for no connectivity, `generic` for any other load failure) in `config/ruby_native.yml` under `errors:`, using the same `icon:`/`icons:` form as tabs, and put title, message, and shared retry copy in your app's own locale files under the `ruby_native.errors.*` namespace.
 
 ## [0.10.6] - 2026-06-16
 
 ### Fixed
 
 - **The floating action button and native nav bar now render in apps without a tab bar.** When `config/ruby_native.yml` had no `tabs:` section, the iOS bridge only reported native signals on pages that declared a tab bar, so a tab-less app's FAB and nav bar never appeared. The bridge now reports whenever any native signal is present (FAB, nav bar, form, or push), and the Normal Mode FAB anchors to the bottom safe area when there is no tab bar to sit above.
-- **A presented modal no longer removes the Advanced Mode FAB.** Opening a modal (a `/new` or `/edit` screen) whose page declared no FAB tore down the underlying tab's FAB, and dismissing the modal did not bring it back. The FAB is now keyed to the tab's own web view, so a modal session can no longer remove it.
+- **A presented modal no longer removes the Advanced Mode FAB.** Opening a modal (a `/new` or `/edit` screen) whose page declared no FAB tore down the underlying tab's FAB, and dismissing the modal did not bring it back.
 
 ## [0.10.4] - 2026-06-12
 

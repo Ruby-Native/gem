@@ -126,6 +126,22 @@ module RubyNative
         end
       end
 
+      # Adds a native share button to the nav bar. Tapping it opens the
+      # platform share sheet for `url:` (defaults to the current page on the
+      # web side) so it works even where embedded web views don't support
+      # `navigator.share`. Icons follow the same rules as the other navbar
+      # buttons: `icon:` applies to every platform and `icons:` ({ ios:,
+      # android: }) overrides per platform.
+      def share_button(url: nil, title: "Share", icon: "square.and.arrow.up", icons: nil, position: :trailing)
+        resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
+        data = { native_button: "", native_share: "" }
+        data[:native_title] = title if title
+        data[:native_icon] = resolved if resolved
+        data[:native_position] = position.to_s
+        data[:native_share_url] = url if url
+        @items << @context.tag.div(data: data)
+      end
+
       def submit_button(title: "Save", click: "[type='submit']")
         @items << @context.tag.div(data: {
           native_submit_button: "",
@@ -150,6 +166,19 @@ module RubyNative
         data = { native_menu_item: "", native_title: title }
         data[:native_href] = href if href
         data[:native_click] = click if click
+        data[:native_icon] = resolved if resolved
+        data[:native_selected] = "" if selected
+        @items << @context.tag.div(data: data)
+      end
+
+      # Adds a share entry to a navbar button's dropdown menu. Selecting it
+      # opens the platform share sheet for `url:` (defaults to the current
+      # page on the web side). Icons follow the same `icon:`/`icons:` rules
+      # as the other menu items.
+      def share_item(title = "Share", url: nil, icon: "square.and.arrow.up", icons: nil, selected: false)
+        resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
+        data = { native_menu_item: "", native_title: title, native_share: "" }
+        data[:native_share_url] = url if url
         data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
         @items << @context.tag.div(data: data)

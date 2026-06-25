@@ -265,6 +265,43 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'data-native-selected'
   end
 
+  def test_native_navbar_tag_share_button
+    html = native_navbar_tag("Article") do |navbar|
+      navbar.share_button
+    end
+
+    assert_includes html, "data-native-button"
+    assert_includes html, "data-native-share"
+    assert_includes html, 'data-native-icon="square.and.arrow.up"'
+    assert_includes html, 'data-native-title="Share"'
+    assert_includes html, 'data-native-position="trailing"'
+    refute_includes html, "data-native-share-url"
+  end
+
+  def test_native_navbar_tag_share_button_with_url_and_icon
+    html = native_navbar_tag("Article") do |navbar|
+      navbar.share_button url: "https://example.com/articles/1", icon: "square.and.arrow.up.circle", title: "Send"
+    end
+
+    assert_includes html, 'data-native-share-url="https://example.com/articles/1"'
+    assert_includes html, 'data-native-icon="square.and.arrow.up.circle"'
+    assert_includes html, 'data-native-title="Send"'
+    refute_includes html, "data-native-share-color"
+  end
+
+  def test_native_navbar_tag_share_item_in_menu
+    html = native_navbar_tag("Article") do |navbar|
+      navbar.button icon: "ellipsis.circle" do |button|
+        button.share_item
+      end
+    end
+
+    assert_includes html, "data-native-menu-item"
+    assert_includes html, "data-native-share"
+    assert_includes html, 'data-native-title="Share"'
+    assert_includes html, 'data-native-icon="square.and.arrow.up"'
+  end
+
   def test_native_navbar_tag_button_with_menu_items
     html = native_navbar_tag("Profile") do |navbar|
       navbar.button icon: "ellipsis.circle", position: :leading do |button|

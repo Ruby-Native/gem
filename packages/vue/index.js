@@ -109,6 +109,45 @@ export const NativeMenuItem = defineComponent({
   }
 })
 
+export const NativeShareButton = defineComponent({
+  name: "NativeShareButton",
+  props: {
+    position: { type: String, default: "trailing" },
+    title: { type: String, default: "Share" },
+    icon: { type: String, default: "square.and.arrow.up" },
+    icons: Object,
+    url: String
+  },
+  render() {
+    const resolved = resolveIcon(this.icon, this.icons)
+    const attrs = { "data-native-button": true, "data-native-share": "" }
+    if (this.title) attrs["data-native-title"] = this.title
+    if (resolved) attrs["data-native-icon"] = resolved
+    if (this.position) attrs["data-native-position"] = this.position
+    if (this.url) attrs["data-native-share-url"] = this.url
+    return h("div", attrs)
+  }
+})
+
+export const NativeShareMenuItem = defineComponent({
+  name: "NativeShareMenuItem",
+  props: {
+    title: { type: String, default: "Share" },
+    url: String,
+    icon: { type: String, default: "square.and.arrow.up" },
+    icons: Object,
+    selected: { type: Boolean, default: undefined }
+  },
+  render() {
+    const resolved = resolveIcon(this.icon, this.icons)
+    const attrs = { "data-native-menu-item": true, "data-native-share": "", "data-native-title": this.title }
+    if (this.url) attrs["data-native-share-url"] = this.url
+    if (resolved) attrs["data-native-icon"] = resolved
+    if (this.selected) attrs["data-native-selected"] = ""
+    return h("div", attrs)
+  }
+})
+
 export const NativeFab = defineComponent({
   name: "NativeFab",
   props: {

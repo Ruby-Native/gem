@@ -64,6 +64,25 @@ export function NativeMenuItem({ title, href, click, icon, icons, selected }) {
   return createElement("div", props)
 }
 
+export function NativeShareButton({ position = "trailing", title = "Share", icon = "square.and.arrow.up", icons, url }) {
+  const resolved = resolveIcon(icon, icons)
+  const props = { "data-native-button": true, "data-native-share": "" }
+  if (title) props["data-native-title"] = title
+  if (resolved) props["data-native-icon"] = resolved
+  if (position) props["data-native-position"] = position
+  if (url) props["data-native-share-url"] = url
+  return createElement("div", props)
+}
+
+export function NativeShareMenuItem({ title = "Share", url, icon = "square.and.arrow.up", icons, selected }) {
+  const resolved = resolveIcon(icon, icons)
+  const props = { "data-native-menu-item": true, "data-native-share": "", "data-native-title": title }
+  if (url) props["data-native-share-url"] = url
+  if (resolved) props["data-native-icon"] = resolved
+  if (selected) props["data-native-selected"] = ""
+  return createElement("div", props)
+}
+
 export function NativeFab({ icon, icons, href, click }) {
   const resolved = resolveIcon(icon, icons)
   if (!resolved) throw new Error("NativeFab requires `icon` or `icons`")
