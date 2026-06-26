@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Add a launch splash screen on iOS with `appearance.splash`.** Set `enabled: true` to show your launch icon and `background_color` with an activity indicator until the first screen loads, instead of flashing to a blank web view.
+
 ## [0.10.10] - 2026-06-26
 
 ### Added

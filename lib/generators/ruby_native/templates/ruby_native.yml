@@ -56,6 +56,21 @@ appearance:
   #   # Omit to let the system decide.
   #   status_bar: light
 
+  # Show a launch splash while the first screen loads. It holds your launch icon
+  # and background_color in frame, with a spinner, until the web content paints.
+  # Off by default; set enabled: true to turn it on.
+  # https://rubynative.com/docs/appearance#splash-screen
+  # splash:
+  #   enabled: true
+  #
+  #   # Spinner color. Accepts a hex string, or { light:, dark: } for dark mode.
+  #   # Defaults to a contrast-aware pick from your background_color.
+  #   spinner_color: "#007AFF"
+  #
+  #   # Status bar content over the splash. Options: light (white) or dark.
+  #   # Defaults to a contrast-aware pick from your background_color.
+  #   status_bar: dark
+
 # Configure the native tab bar on the bottom of the screen.
 # https://rubynative.com/docs/tabs
 tabs:
