@@ -1,6 +1,6 @@
 {
   "name": "@ruby-native/vue",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "description": "Vue components for Ruby Native",
   "main": "index.js",
   "files": ["index.js", "README.md"],
