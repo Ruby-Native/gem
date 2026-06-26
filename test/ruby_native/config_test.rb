@@ -88,12 +88,44 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  def test_config_is_rendered_as_erb
+    with_raw_config(<<~YAML) do
+      app:
+        name: "<%= ["Ruby", "Native"].join(" ") %>"
+      tabs: []
+    YAML
+      RubyNative.load_config
+      assert_equal "Ruby Native", RubyNative.config[:app][:name]
+    end
+  end
+
+  def test_erb_binding_exposes_asset_helpers
+    # The navbar logo relies on `image_url` resolving inside the config. We can't
+    # exercise a real asset without a pipeline in the dummy app, but asserting
+    # the helper is in scope proves the ERB binding is the view helper context.
+    with_raw_config(<<~YAML) do
+      app:
+        name: App
+      tabs: []
+      appearance:
+        navbar:
+          logo: "<%= respond_to?(:image_url) %>"
+    YAML
+      RubyNative.load_config
+      assert_equal "true", RubyNative.config[:appearance][:navbar][:logo]
+    end
+  end
+
   private
 
   def with_config(config)
+    with_raw_config(config.deep_stringify_keys.to_yaml) { yield }
+  end
+
+  def with_raw_config(yaml)
     path = Rails.root.join("config", "ruby_native.yml")
     original = path.read
-    path.write(config.deep_stringify_keys.to_yaml)
+    path.write(yaml)
     yield
   ensure
     path.write(original)

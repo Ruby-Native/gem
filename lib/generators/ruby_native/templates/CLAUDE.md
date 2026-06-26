@@ -81,6 +81,27 @@ background_color:
 
 Match these to your CSS framework's dark mode colors. For Bootstrap, `#212529` is `--bs-body-bg` in dark mode.
 
+### Navbar branding
+
+Replace the navigation bar's text title with a centered logo and set your own bar colors. This is global chrome: the same bar on every screen.
+
+```yaml
+appearance:
+  navbar:
+    logo: "<%= image_url('logo.png') %>"
+    background_color: "#3B3F54"
+    foreground_color: "#FFFFFF"
+    status_bar: light
+```
+
+`config/ruby_native.yml` is evaluated as ERB, so `logo` can be any Rails expression that returns a URL. Use `image_url` for a local asset: the URL is fingerprinted, so the app caches the logo and re-downloads it only when the image changes. A full URL works too, so the logo can live on a CDN:
+
+```yaml
+    logo: "https://cdn.example.com/logo.png"
+```
+
+`background_color` and `foreground_color` each accept a hex string or a `{ light:, dark: }` object. `status_bar` sets the status bar content to `light` (white) or `dark` to match your bar; omit it to let the system decide.
+
 ## View helpers
 
 Use these in your layouts and views:

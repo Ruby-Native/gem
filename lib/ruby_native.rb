@@ -1,3 +1,4 @@
+require "erb"
 require "ruby_native/version"
 require "ruby_native/helper"
 require "ruby_native/native_version"
@@ -37,13 +38,30 @@ module RubyNative
     path = Rails.root.join("config", "ruby_native.yml")
     return unless path.exist?
 
-    self.config = YAML.load_file(path).deep_symbolize_keys
+    self.config = YAML.load(render_config(path)).deep_symbolize_keys
     self.config[:app] ||= {}
     self.config[:app][:entry_path] ||= self.config.dig(:tabs, 0, :path) || "/"
     self.config[:auth] ||= {}
     normalize_oauth_paths
     backfill_tab_icons
     backfill_error_icons
+  end
+
+  # config/ruby_native.yml is rendered as ERB before it is parsed, so a
+  # developer can interpolate Rails helpers into it. The motivating case is the
+  # navbar logo: `logo: "<%= image_url("logo.png") %>"` resolves to a
+  # fingerprinted asset URL the native app downloads and caches, and because the
+  # digest changes whenever the asset changes, the cache busts itself. A full
+  # URL (a CDN, say) works just as well; the app only ever sees a URL to fetch.
+  #
+  # The template renders against the controller helper proxy, so `image_url` and
+  # friends behave exactly as they do in a view. With no request or asset host
+  # they degrade to a relative path -- asset helpers never raise "missing host"
+  # the way routing helpers do -- and the native app resolves any relative URL
+  # against the base URL it already fetched the config from.
+  def self.render_config(path)
+    helpers = ActionController::Base.helpers
+    ERB.new(path.read, trim_mode: "-").result(helpers.instance_eval { binding })
   end
 
   # Mirrors per-platform `icons:` into the legacy flat `icon:` field so native

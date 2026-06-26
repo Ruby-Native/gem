@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Brand the navigation bar with `appearance.navbar`.** Set a centered `logo`, bar `background_color`/`foreground_color`, and a `status_bar` style (`light`/`dark`) to brand the bar across the whole app; the logo replaces the page title on every screen.
+- **`config/ruby_native.yml` is now evaluated as ERB.** Interpolate Rails helpers into your config, most usefully `logo: "<%= image_url('logo.png') %>"` so the navbar logo points at a fingerprinted asset the app downloads once and caches.
+
+### Fixed
+
+- **Advanced Mode tab bar icons now render on Android.** Configured Material Symbols (`icons.android`) previously fell back to a blank placeholder for all but a few names; each tab now draws its icon, matching Normal Mode and iOS.
+
+### Changed
+
+- **Tab labels now always show in Advanced Mode on Android.** With four or more tabs, Android hid the label on unselected tabs; every tab now shows its title, matching iOS and Normal Mode.
+
 ## [0.10.9] - 2026-06-25
 
 ### Added

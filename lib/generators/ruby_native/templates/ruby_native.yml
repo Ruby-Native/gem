@@ -34,6 +34,28 @@ appearance:
   # Default: false (portrait-only).
   # landscape: true
 
+  # Brand the navigation bar across the whole app: a centered logo in place of
+  # the page title, plus your own bar colors.
+  # https://rubynative.com/docs/appearance#navbar-branding
+  # navbar:
+  #   # Centered logo, shown instead of the page title. Set this to an image URL.
+  #   # For a local asset, point it at image_url wrapped in ERB so the URL is
+  #   # fingerprinted (the app re-downloads only when the image changes). The
+  #   # docs page above has the exact snippet to copy.
+  #   logo: "https://cdn.example.com/logo.png"
+  #
+  #   # Bar background color.
+  #   # Accepts a hex string, or { light:, dark: } for dark mode support.
+  #   background_color: "#3B3F54"
+  #
+  #   # Title and bar-button color.
+  #   # Accepts a hex string, or { light:, dark: } for dark mode support.
+  #   foreground_color: "#FFFFFF"
+  #
+  #   # Status bar content, to match your bar. Options: light (white) or dark.
+  #   # Omit to let the system decide.
+  #   status_bar: light
+
 # Configure the native tab bar on the bottom of the screen.
 # https://rubynative.com/docs/tabs
 tabs:

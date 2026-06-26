@@ -99,6 +99,27 @@ class RubyNative::ConfigAsJsonTest < Minitest::Test
     refute generic.key?(:icons)
   end
 
+  def test_navbar_appearance_passes_through
+    write_config(
+      app: {name: "Test App"},
+      appearance: {
+        background_color: "#FFFFFF",
+        navbar: {
+          logo: "https://cdn.example.com/logo.png",
+          background_color: "#3B3F54",
+          foreground_color: "#FFFFFF"
+        }
+      },
+      tabs: [{title: "Home", path: "/", icon: "house"}]
+    )
+    RubyNative.load_config
+
+    navbar = RubyNative.config_as_json[:appearance][:navbar]
+    assert_equal "https://cdn.example.com/logo.png", navbar[:logo]
+    assert_equal "#3B3F54", navbar[:background_color]
+    assert_equal "#FFFFFF", navbar[:foreground_color]
+  end
+
   private
 
   def store_translations(locale, states)
