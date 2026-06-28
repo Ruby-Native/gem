@@ -126,6 +126,19 @@ module RubyNative
         end
       end
 
+      # Adds a segment to the nav bar. On iOS the segments render as a centered
+      # segmented control (the same control the App Store uses for Apps/Games).
+      # Mark the current page's segment `selected: true`. Tapping a segment
+      # navigates to its `href` (or clicks the `click` selector), replacing
+      # history so the back button doesn't walk back through segment switches.
+      def segment(title, href: nil, click: nil, selected: false)
+        data = { native_segment: "", native_title: title }
+        data[:native_href] = href if href
+        data[:native_click] = click if click
+        data[:native_selected] = "" if selected
+        @items << @context.tag.div(data: data)
+      end
+
       # Adds a native share button to the nav bar. Tapping it opens the
       # platform share sheet for `url:` (defaults to the current page on the
       # web side) so it works even where embedded web views don't support

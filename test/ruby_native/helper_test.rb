@@ -419,6 +419,41 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'data-native-click="#my-submit"'
   end
 
+  def test_native_navbar_tag_with_segments
+    html = native_navbar_tag do |navbar|
+      navbar.segment "Pledges", href: "/pledges", selected: true
+      navbar.segment "Rewards", href: "/rewards"
+    end
+
+    assert_includes html, "data-native-navbar"
+    assert_includes html, "hidden"
+    assert_includes html, "data-native-segment"
+    assert_includes html, 'data-native-title="Pledges"'
+    assert_includes html, 'data-native-href="/pledges"'
+    assert_includes html, 'data-native-title="Rewards"'
+    assert_includes html, 'data-native-href="/rewards"'
+  end
+
+  def test_native_navbar_tag_segment_selected
+    html = native_navbar_tag do |navbar|
+      navbar.segment "Pledges", href: "/pledges", selected: true
+      navbar.segment "Rewards", href: "/rewards"
+    end
+
+    assert_match(/data-native-href="\/pledges".*data-native-selected/, html)
+    refute_match(/data-native-href="\/rewards".*data-native-selected/, html)
+  end
+
+  def test_native_navbar_tag_segment_with_click
+    html = native_navbar_tag do |navbar|
+      navbar.segment "Active", click: "#active-segment"
+    end
+
+    assert_includes html, "data-native-segment"
+    assert_includes html, 'data-native-click="#active-segment"'
+    refute_includes html, "data-native-href"
+  end
+
   def test_native_haptic_data_defaults_to_success
     data = native_haptic_data
     assert_equal "success", data[:native_haptic]

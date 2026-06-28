@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Add segments to the navigation bar with `navbar.segment`.** Render up to a few segmented buttons in the bar to switch between closely related pages (iOS only for now); mark the current page's segment `selected`. Switching segments replaces history instead of stacking it, so the back button doesn't step through the switches.
+
 ## [0.10.11] - 2026-06-26
 
 ### Added
