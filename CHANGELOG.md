@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Add segments to the navigation bar with `navbar.segment`.** Render up to a few segmented buttons in the bar to switch between closely related pages (iOS only for now); mark the current page's segment `selected`. Switching segments replaces history instead of stacking it, so the back button doesn't step through the switches.
 
+### Fixed
+
+- **`native_version` now reports the real version in Android apps.** The Android User-Agent hardcoded the version, so the helper always returned `0.1.0`; it now reflects the installed build, matching iOS.
+- **Advanced Mode tab bar no longer has extra padding below it on Android.** The gesture inset was applied twice, leaving an empty band beneath the tab labels; it now sits flush against the gesture bar, matching Normal Mode.
+
 ## [0.10.11] - 2026-06-26
 
 ### Added
