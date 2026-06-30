@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Microphone and camera capture now work in Advanced Mode on Android.** Web `getUserMedia` requests were silently denied with no permission prompt; they now request the native runtime permission and grant the web view, matching Normal Mode and iOS.
 - **`native_version` now reports the real version in Android apps.** The Android User-Agent hardcoded the version, so the helper always returned `0.1.0`; it now reflects the installed build, matching iOS.
 - **Advanced Mode tab bar no longer has extra padding below it on Android.** The gesture inset was applied twice, leaving an empty band beneath the tab labels; it now sits flush against the gesture bar, matching Normal Mode.
 
