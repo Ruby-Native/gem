@@ -454,6 +454,29 @@ class RubyNative::HelperTest < ActionView::TestCase
     refute_includes html, "data-native-href"
   end
 
+  # Builder methods return a blank, html-safe string so they read naturally with
+  # `<%= navbar.button %>` in ERB (which erb_lint requires) without emitting
+  # anything. The nav bar still renders from the collected items.
+  def test_navbar_builder_methods_are_output_safe
+    builder = RubyNative::Helper::NavbarBuilder.new(self)
+
+    result = builder.button("Add", href: "/add")
+
+    assert_equal "", result
+    assert_predicate result, :html_safe?
+    assert_includes builder.to_html, 'data-native-title="Add"'
+  end
+
+  def test_navbar_menu_builder_items_are_output_safe
+    builder = RubyNative::Helper::NavbarMenuBuilder.new(self)
+
+    result = builder.item("Edit", href: "/edit")
+
+    assert_equal "", result
+    assert_predicate result, :html_safe?
+    assert_includes builder.to_html, 'data-native-title="Edit"'
+  end
+
   def test_native_haptic_data_defaults_to_success
     data = native_haptic_data
     assert_equal "success", data[:native_haptic]

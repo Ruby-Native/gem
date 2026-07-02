@@ -120,9 +120,9 @@ module RubyNative
         if block
           menu = NavbarMenuBuilder.new(@context)
           @context.capture(menu, &block)
-          @items << @context.tag.div(data: data) { menu.to_html }
+          add(@context.tag.div(data: data) { menu.to_html })
         else
-          @items << @context.tag.div(data: data)
+          add(@context.tag.div(data: data))
         end
       end
 
@@ -136,7 +136,7 @@ module RubyNative
         data[:native_href] = href if href
         data[:native_click] = click if click
         data[:native_selected] = "" if selected
-        @items << @context.tag.div(data: data)
+        add(@context.tag.div(data: data))
       end
 
       # Adds a native share button to the nav bar. Tapping it opens the
@@ -152,19 +152,31 @@ module RubyNative
         data[:native_icon] = resolved if resolved
         data[:native_position] = position.to_s
         data[:native_share_url] = url if url
-        @items << @context.tag.div(data: data)
+        add(@context.tag.div(data: data))
       end
 
       def submit_button(title: "Save", click: "[type='submit']")
-        @items << @context.tag.div(data: {
+        add(@context.tag.div(data: {
           native_submit_button: "",
           native_title: title,
           native_click: click
-        })
+        }))
       end
 
       def to_html
         @context.safe_join(@items)
+      end
+
+      private
+
+      # Collects a signal element and returns a blank, html-safe string. That
+      # lets the builder read naturally with `<%=` in ERB (`<%= navbar.button %>`)
+      # without emitting anything, since the nav bar renders from the collected
+      # items in `to_html`, not from these return values. Silent `<% %>` tags
+      # keep working too.
+      def add(item)
+        @items << item
+        ActiveSupport::SafeBuffer.new
       end
     end
 
@@ -181,7 +193,7 @@ module RubyNative
         data[:native_click] = click if click
         data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
-        @items << @context.tag.div(data: data)
+        add(@context.tag.div(data: data))
       end
 
       # Adds a share entry to a navbar button's dropdown menu. Selecting it
@@ -194,11 +206,20 @@ module RubyNative
         data[:native_share_url] = url if url
         data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
-        @items << @context.tag.div(data: data)
+        add(@context.tag.div(data: data))
       end
 
       def to_html
         @context.safe_join(@items)
+      end
+
+      private
+
+      # See NavbarBuilder#add: collects the item and returns a blank, html-safe
+      # string so menu items read naturally with `<%= menu.item %>` in ERB.
+      def add(item)
+        @items << item
+        ActiveSupport::SafeBuffer.new
       end
     end
   end
