@@ -22,6 +22,12 @@ module RubyNative
   mattr_accessor :screenshot_key
   mattr_accessor :screenshot_sign_in
 
+  # How the push endpoint finds the signed-in user to attach a device token to.
+  # Accepts a controller method name (Symbol) or a callable evaluated in the
+  # controller, e.g. `-> { Current.person }`. Defaults to `current_user`, so
+  # Devise apps need no configuration. Set via `RubyNative.configure`.
+  mattr_accessor :current_user_resolver, default: :current_user
+
   def self.configure
     yield self
   end
