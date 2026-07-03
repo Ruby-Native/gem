@@ -187,7 +187,8 @@ module RubyNative
         puts ""
         puts url
         puts ""
-        puts "Scan the QR code or paste the URL into the Ruby Native Preview app."
+        puts "Scan the QR code or paste the URL into the Ruby Native app."
+        puts "Don't have it yet? Download it at https://rubynative.com/try/download"
         if @url
           puts "Keep this running and your Rails server reachable at #{@url}."
         else

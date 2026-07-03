@@ -99,6 +99,15 @@ class PreviewTest < Minitest::Test
     assert_match(/did not respond within 60s/, out)
   end
 
+  def test_display_qr_links_to_the_app_download_page
+    out, _err = capture_io do
+      @preview.send(:display_qr, "https://example.trycloudflare.com")
+    end
+    assert_match(%r{into the Ruby Native app}, out)
+    assert_match(%r{https://rubynative\.com/try/download}, out)
+    refute_match(/Preview app/, out)
+  end
+
   private
 
   def stub_http_response(response)
