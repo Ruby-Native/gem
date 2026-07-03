@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Microphone capture now actually starts on Android.** `getUserMedia` cleared the permission but failed with `NotReadableError` because the app didn't declare `MODIFY_AUDIO_SETTINGS`, which Chromium's WebView needs to open the audio device. Apps that opt into the microphone now declare it. Applies to both Normal and Advanced Mode.
+- **The file-input camera option now works in Advanced Mode on Android.** Tapping Camera in a file picker silently did nothing because the app declared `CAMERA` but never requested it at runtime; the picker now requests the camera permission first, matching the `getUserMedia` flow.
+
 ## [0.10.12] - 2026-07-02
 
 ### Added
