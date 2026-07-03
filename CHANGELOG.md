@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Added
+
+- **Configure how push finds the signed-in user with `RubyNative.current_user_resolver`.** Defaults to `current_user`; set it to a method name or a callable like `-> { Current.person }` so apps that expose the current user another way don't need a `current_user` alias just for push.
+
+### Changed
+
+- **Inline navbars now read with `<%=` in ERB.** The `navbar` and `menu` builder methods return a blank string, so `<%= navbar.button %>` renders nothing extra and passes `erb_lint`, which flags a bare `<%` call as an unused expression. Existing `<%` usage still works.
+
 ### Fixed
 
 - **Microphone capture now actually starts on Android.** `getUserMedia` cleared the permission but failed with `NotReadableError` because the app didn't declare `MODIFY_AUDIO_SETTINGS`, which Chromium's WebView needs to open the audio device. Apps that opt into the microphone now declare it. Applies to both Normal and Advanced Mode.
