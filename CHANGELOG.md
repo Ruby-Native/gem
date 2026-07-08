@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Normal Mode no longer crashes on popups that open a non-web URL.** A `window.open` targeting a `mailto:`, `tel:`, or auth-provider scheme (like a Sign in with Apple popup) crashed the app because the in-app browser rejects non-http(s) URLs; these now hand off to the system handler while web URLs still open in the in-app browser. iOS only.
+
 ## [0.10.14] - 2026-07-03
 
 ### Added
