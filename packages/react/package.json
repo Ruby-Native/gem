@@ -3,13 +3,22 @@
   "version": "0.10.14",
   "description": "React components for Ruby Native",
   "main": "index.js",
-  "files": ["index.js", "README.md"],
+  "types": "index.d.ts",
+  "files": ["index.js", "index.d.ts", "README.md"],
+  "scripts": {
+    "types": "tsc -p .",
+    "prepublishOnly": "npm run types"
+  },
   "peerDependencies": {
     "react": ">=18",
     "@inertiajs/react": ">=2"
   },
   "peerDependenciesMeta": {
     "@inertiajs/react": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.9.0"
   },
   "repository": {
     "type": "git",

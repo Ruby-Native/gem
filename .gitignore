@@ -4,3 +4,7 @@ Gemfile.lock
 log/
 pkg/
 tmp/
+
+# Generated from the JSDoc in index.js at publish time. Never hand-edit.
+packages/*/index.d.ts
+packages/*/node_modules/

@@ -3,13 +3,22 @@
   "version": "0.10.14",
   "description": "Vue components for Ruby Native",
   "main": "index.js",
-  "files": ["index.js", "README.md"],
+  "types": "index.d.ts",
+  "files": ["index.js", "index.d.ts", "README.md"],
+  "scripts": {
+    "types": "tsc -p .",
+    "prepublishOnly": "npm run types"
+  },
   "peerDependencies": {
     "vue": ">=3",
     "@inertiajs/vue3": ">=2"
   },
   "peerDependenciesMeta": {
     "@inertiajs/vue3": { "optional": true }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vue": "^3.5.0"
   },
   "repository": {
     "type": "git",

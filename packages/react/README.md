@@ -39,17 +39,42 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeNavbar` - native navigation bar with title and buttons
 - `NativeButton` - native nav bar button (icon, title, href, or click target)
 - `NativeMenuItem` - item inside a native menu
+- `NativeShareButton` - native nav bar button that opens the share sheet
+- `NativeShareMenuItem` - menu item that opens the share sheet
 - `NativeSubmitButton` - native "Save" button that submits a form
+- `NativeFab` - floating action button
 - `NativeOverscroll` - per-page overscroll colors
 - `NativeBadge` - set the badge count on a home screen or tab bar icon
+- `NativeBackButton` - visible button that pops the native navigation stack
+
+`NativeBackButton` renders a chevron unless you pass children, and forwards extra props to the underlying `<button>`. An `onClick` handler runs first and can call `preventDefault()` to cancel the back:
+
+```jsx
+<NativeBackButton className="mr-2" aria-label="Go back" />
+```
 
 ## Helpers
 
+- `nativePlatform()` - returns `"ios"`, `"android"`, or `null` on the web. The counterpart of the `native_platform` Rails helper.
 - `nativeHaptic(feedback = "success", data = {})` - returns props to spread onto a clickable element so tapping it triggers native haptic feedback:
 
   ```jsx
   <button {...nativeHaptic("success")}>Save</button>
   ```
+
+## TypeScript
+
+Type declarations ship with the package. There is nothing to install and no `@types` companion package. Importing a component gives you autocomplete and prop checking:
+
+```tsx
+import { NativeNavbar, NativeButton } from "@ruby-native/react"
+
+<NativeNavbar title="Books" pullToRefresh={false}>
+  <NativeButton position="leading" icon="chevron.left" href="/books" />
+</NativeNavbar>
+```
+
+The `NativeIcons`, `NativeButtonPosition`, and `NativeHapticFeedback` types are exported too.
 
 ## Docs
 

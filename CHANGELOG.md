@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Added
+
+- **`@ruby-native/react` and `@ruby-native/vue` now ship TypeScript declarations.** Importing a component gives you autocomplete and prop checking with no `@types` package to install; `NativeIcons`, `NativeButtonPosition`, and `NativeHapticFeedback` are exported as types. The declarations are generated from the package source at publish, so they can't drift from the components.
+- **Pop the navigation stack from React and Vue with `NativeBackButton`.** The counterpart of `native_back_button_tag`: renders a chevron unless given children, and forwards extra props to the underlying button.
+- **Check the current platform from React and Vue with `nativePlatform()`.** Returns `"ios"`, `"android"`, or `null` on the web, matching the `native_platform` Rails helper.
+
 ### Fixed
 
 - **Normal Mode no longer crashes on popups that open a non-web URL.** A `window.open` targeting a `mailto:`, `tel:`, or auth-provider scheme (like a Sign in with Apple popup) crashed the app because the in-app browser rejects non-http(s) URLs; these now hand off to the system handler while web URLs still open in the in-app browser. iOS only.

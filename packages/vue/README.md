@@ -37,17 +37,34 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeNavbar` - native navigation bar with title and buttons
 - `NativeButton` - native nav bar button (icon, title, href, or click target)
 - `NativeMenuItem` - item inside a native menu
+- `NativeShareButton` - native nav bar button that opens the share sheet
+- `NativeShareMenuItem` - menu item that opens the share sheet
 - `NativeSubmitButton` - native "Save" button that submits a form
+- `NativeFab` - floating action button
 - `NativeOverscroll` - per-page overscroll colors
 - `NativeBadge` - set the badge count on a home screen or tab bar icon
+- `NativeBackButton` - visible button that pops the native navigation stack
+
+`NativeBackButton` renders a chevron unless you pass default slot content:
+
+```vue
+<NativeBackButton class="mr-2" />
+```
 
 ## Helpers
 
+- `nativePlatform()` - returns `"ios"`, `"android"`, or `null` on the web. The counterpart of the `native_platform` Rails helper.
 - `nativeHaptic(feedback = "success", data = {})` - returns attributes to `v-bind` onto a clickable element so tapping it triggers native haptic feedback:
 
   ```vue
   <button v-bind="nativeHaptic('success')">Save</button>
   ```
+
+## TypeScript
+
+Type declarations ship with the package. There is nothing to install and no `@types` companion package. Components carry their prop types, so `vue-tsc` checks them in single-file components.
+
+The `NativeIcons`, `NativeButtonPosition`, and `NativeHapticFeedback` types are exported too.
 
 ## Docs
 
