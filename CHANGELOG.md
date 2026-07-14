@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`@ruby-native/react` and `@ruby-native/vue` now ship TypeScript declarations.** Importing a component gives you autocomplete and prop checking with no `@types` package to install; `NativeIcons`, `NativeButtonPosition`, and `NativeHapticFeedback` are exported as types. The declarations are generated from the package source at publish, so they can't drift from the components.
 - **Pop the navigation stack from React and Vue with `NativeBackButton`.** The counterpart of `native_back_button_tag`: renders a chevron unless given children, and forwards extra props to the underlying button.
 - **Check the current platform from React and Vue with `nativePlatform()`.** Returns `"ios"`, `"android"`, or `null` on the web, matching the `native_platform` Rails helper.
+- **File links now open in-app in QuickLook instead of ejecting to a logged-out browser.** A PDF, image, or other attachment opened by a link tap or `window.open` used to open a session-less browser showing a login screen; it now downloads with the app's session and previews in QuickLook. Covers link taps and `window.open` in Normal Mode and `window.open` in Advanced Mode. iOS only.
 
 ### Fixed
 
