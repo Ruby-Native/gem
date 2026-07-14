@@ -1,6 +1,6 @@
 {
   "name": "@ruby-native/vue",
-  "version": "0.10.14",
+  "version": "0.10.20",
   "description": "Vue components for Ruby Native",
   "main": "index.js",
   "types": "index.d.ts",

@@ -1,3 +1,3 @@
 module RubyNative
-  VERSION = "0.10.14"
+  VERSION = "0.10.20"
 end
