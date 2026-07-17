@@ -20,7 +20,7 @@ module RubyNative
       when "screenshots"
         warn "ruby_native screenshots was removed in 0.9.0."
         warn "Screenshots are now captured by rubynative.com against your deployed site."
-        warn "See https://rubynative.com/docs/ship/screenshots for the new flow."
+        warn "See https://rubynative.com/docs/screenshots for the new flow."
         exit 1
       else
         puts "Usage: ruby_native <command>"
