@@ -1,6 +1,6 @@
-# ruby_native gem
+# ruby_native
 
-A Rails engine that provides native detection, configuration, push device registration, and view helpers for Ruby Native iOS and Android apps.
+[Ruby Native](https://rubynative.com) turns a Rails app into an iOS app, with Android in public beta. This gem is the Rails-side integration: view helpers, a YAML config file, endpoints auto-mounted at `/native`, and a CLI for previewing and deploying builds. Full docs, including the complete helper reference and config schema, live at [rubynative.com/docs](https://rubynative.com/docs).
 
 ## Installation
 
@@ -12,30 +12,42 @@ The engine auto-mounts at `/native`. No route configuration needed.
 
 ## Getting started
 
-Run the install generator to create your config file:
+Run the install generator:
 
 ```bash
 rails generate ruby_native:install
 ```
 
-This creates `config/ruby_native.yml` with sensible defaults. If you have a `.claude/` directory, it also adds `.claude/ruby_native.md` with AI-assisted setup instructions. Follow the printed instructions to:
+This creates `config/ruby_native.yml`. Then:
 
-1. Edit the config with your app name, colors, and tabs
-2. Add `<%= stylesheet_link_tag :ruby_native %>` to your layout `<head>`
-3. Add `<%= native_tabs_tag %>` to your layout `<body>`
-4. Run `bundle exec ruby_native preview` to see it on your phone
+1. Edit the config with your colors and tabs (see below).
+2. Add the stylesheet and `viewport-fit=cover` to your layout `<head>`:
 
-Using Claude Code? Open it in your project and ask "what do I need to do next?" for guided setup.
+   ```erb
+   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+   <%= stylesheet_link_tag :ruby_native %>
+   ```
+
+   `viewport-fit=cover` is required for CSS `env(safe-area-inset-*)` variables to resolve to real values instead of `0`.
+3. Add the tab bar to your layout `<body>`:
+
+   ```erb
+   <%= native_tabs_tag %>
+   ```
+4. Preview it on your phone (see below).
+
+The full walkthrough, including safe area layout and hiding web-only navigation with `native_app?`, is at [rubynative.com/docs/setup](https://rubynative.com/docs/setup).
 
 ## Configuration
 
-Edit `config/ruby_native.yml`:
+`config/ruby_native.yml` controls the native shell:
 
 ```yaml
 appearance:
-  tint_color: "#4F46E5"
+  tint_color: "#007AFF"
   background_color: "#FFFFFF"
-tabs:  # optional
+
+tabs:
   - title: Home
     path: /
     icon: house
@@ -44,91 +56,28 @@ tabs:  # optional
     icon: person
 ```
 
-You may also omit `tabs` to hide the tab bar entirely. The app will load `entry_path` or fall back to `/`.
-
-Color fields accept a plain hex string or an object with `light` and `dark` keys for dark mode:
-
-```yaml
-background_color:
-  light: "#FFFFFF"
-  dark: "#1C1C1E"
-```
+Changes are picked up without restarting the server in development. See [rubynative.com/docs](https://rubynative.com/docs) for the full schema: appearance and dark mode, navbar branding, Advanced Mode, OAuth, and linked domains.
 
 ## Preview
 
-Preview your app on a real device without deploying. This starts a Cloudflare tunnel and displays a QR code for the companion app to scan.
+Preview your app on a real device without deploying:
 
 ```bash
 bundle exec ruby_native preview
 ```
 
-Options:
-
-- `--port 3001` - specify the local server port (defaults to 3000)
-
-Requires `cloudflared`. Install with:
+This starts a Cloudflare tunnel and shows a QR code for the Ruby Native app to scan. Your Rails server needs to be running separately. Requires `cloudflared`:
 
 ```bash
 brew install cloudflare/cloudflare/cloudflared
 ```
 
-The companion app persists the scanned URL across launches. Long-press the app icon and tap "Switch website" to scan a new server.
+See [rubynative.com/docs/cli](https://rubynative.com/docs/cli) for `deploy`, `login`, and auto-deploying from CI.
 
-## Endpoints
+## React and Vue
 
-- `GET /native/config` - returns the YAML config as JSON
-- `POST /native/push/devices` - registers a push notification token (requires `current_user` from host app)
+Building with Inertia instead of ERB? `@ruby-native/react` and `@ruby-native/vue` provide the same helpers as npm packages, versioned alongside this gem. See [rubynative.com/docs/inertia](https://rubynative.com/docs/inertia) for setup.
 
-## Push notifications
+## License
 
-Delivery uses the companion `action_push_native` gem. Ruby Native owns the registration handshake (the `native_push_tag` helper prompts for permission, `/native/push/devices` stores the token) and the tap-handling conventions on the native side.
-
-When sending a push, two destination keys are supported via `with_data`:
-
-- `path` — internal route appended to your base URL and loaded in the in-app WebView (e.g. `/sources/42`).
-- `url` — full external URL opened in `SFSafariViewController`, leaving the WebView in place behind it (e.g. `https://dashboard.stripe.com/payments/pi_abc`).
-
-If both are present, `url` wins. `http` and `https` URLs open in `SFSafariViewController`; other valid schemes (`mailto:`, `tel:`, `maps:`, third-party app schemes, etc.) hand off to the appropriate app via `UIApplication.open`. Malformed `url` strings are dropped (the tap does not fall back to `path`).
-
-```ruby
-ApplicationPushNotification
-  .with_data(path: source_path(source), url: notification.external_url)
-  .new(title: "New payment", body: "$49.99 from joe@example.com")
-  .deliver_later_to(user.push_devices)
-```
-
-For model/migration setup, see [action_push_native](https://github.com/basecamp/action_push_native).
-
-## Normal and Advanced Modes
-
-Normal Mode works with any frontend framework and requires no JavaScript. You get tabs, form page marking, push notifications, and history management.
-
-Advanced Mode adds native navigation bar buttons, submit buttons, action menus, and search bars. It requires Stimulus and a small JavaScript setup step (see [Advanced Mode setup](#advanced-mode-setup) below). Migration is additive. Start with Normal and add Advanced helpers one page at a time.
-
-## View helpers
-
-Place helpers in the `<body>`, not the `<head>`.
-
-### Any mode
-
-- `native_app?` - true when the request comes from a Ruby Native app (checks user agent)
-- `native_version` - returns the app version as a `RubyNative::NativeVersion`. Defaults to `"0"` when the version is unknown. Supports string comparisons: `native_version >= "1.4"`.
-- `native_tabs_tag(enabled: true)` - shows the native tab bar.
-- `native_push_tag` - requests push notification permission.
-- `native_back_button_tag(text = nil, **options)` - renders a back button for Normal Mode. Hidden by default, shown when the native app sets `body.can-go-back`. Not needed in [Advanced Mode](https://rubynative.com/docs/advanced-mode) where the system provides a native back button.
-
-- `native_form_tag` - marks the page as a form. The app skips form pages when navigating back.
-- `native_navbar_tag(title, &block)` - native navigation bar with title, buttons, menus, and submit actions.
-- `native_badge_tag(count, home:, tab:)` - sets the app icon and tab bar badge counts.
-- `native_haptic_data(feedback = :success)` - returns a data hash that fires a haptic feedback on click.
-- `native_overscroll_tag(top:, bottom:)` - per-page overscroll colors.
-
-## Stylesheet
-
-The gem includes `ruby_native.css` which controls back button visibility:
-
-```erb
-<%= stylesheet_link_tag :ruby_native %>
-```
-
-This shows `.native-back-button` elements only when `body.can-go-back` is set by the native app.
+MIT.

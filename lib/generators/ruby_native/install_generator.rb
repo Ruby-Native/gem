@@ -29,11 +29,6 @@ module RubyNative
         say "  Added .ruby_native/ to .gitignore", :green
       end
 
-      def copy_claude_instructions
-        return unless File.directory?(File.join(destination_root, ".claude"))
-        copy_file "CLAUDE.md", ".claude/ruby_native.md"
-      end
-
       def print_next_steps
         say ""
         say "Ruby Native installed! Next steps:", :green
@@ -41,16 +36,17 @@ module RubyNative
         say "  1. Edit config/ruby_native.yml with your app name, colors, and tabs"
         say "  2. Add to your layout <head>:"
         say "       <%= stylesheet_link_tag :ruby_native %>"
-        say "  3. Add to your layout <body>:"
+        say "  3. Add viewport-fit=cover to your viewport meta tag:"
+        say "       <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">"
+        say "  4. Add to your layout <body>:"
         say "       <%= native_tabs_tag %>"
-        say "  4. Preview on your device:"
+        say "  5. Preview on your device:"
         say "       bundle exec ruby_native preview"
         say ""
-        if File.directory?(File.join(destination_root, ".claude"))
-          say "  Tip: .claude/ruby_native.md was added with setup instructions."
-          say "  Open Claude Code and ask \"what do I need to do next?\" for guided help."
-          say ""
-        end
+        say "  Docs: https://rubynative.com/docs"
+        say "  AI agents: fetch https://rubynative.com/llms.txt for a docs index,"
+        say "  or https://rubynative.com/llms-full.txt for the full docs as plain text."
+        say ""
       end
     end
   end
