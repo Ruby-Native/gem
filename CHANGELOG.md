@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Advanced Mode now opens every OAuth sign-in in the native sign-in session.** A provider link rendered as a `button_to` with `data-turbo="false"` (the usual OmniAuth shape, since it only accepts POST) or reached through a server-side redirect loaded inside the web view instead of `ASWebAuthenticationSession`. This also unblocks providers that check for a managed device, like Microsoft Entra Conditional Access, because Microsoft's SSO plug-in only attaches to the native session. Normal Mode already handled both. iOS only.
+- **An OAuth path that sits under a tab's path now signs in instead of switching tabs in Advanced Mode.** Tab routing matched first and swallowed the sign-in. iOS only.
+
 ## [0.10.20] - 2026-07-14
 
 ### Added
