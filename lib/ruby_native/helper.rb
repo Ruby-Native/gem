@@ -35,6 +35,38 @@ module RubyNative
       tag.button(text || default_content, onclick: "RubyNative.postMessage({action: 'back'})", **options)
     end
 
+    # Renders a button that opens the native barcode scanner. On a successful
+    # scan the value fills `target` (a CSS selector) and the page receives a
+    # `ruby-native:scan` CustomEvent (override the name with `event:`). Set
+    # `submit: true` to submit the filled field's form after scanning. Narrow the
+    # accepted codes with `formats:` (neutral names, e.g. "ean13,upce"); omit it
+    # for a sane default. Renders a plain button on the web (no-op until opened in
+    # the app); wrap in `native_app?` if it should be hidden there.
+    #
+    #   <%= native_scan_button_tag "Scan", target: "#isbn" %>
+    #
+    # The scanner needs a camera usage description set in your Ruby Native app
+    # settings, or scanning is unavailable in production builds.
+    def native_scan_button_tag(label = "Scan", target: nil, event: nil, submit: false, formats: nil, **options)
+      if Rails.env.development?
+        Rails.logger.warn(
+          "[ruby_native] native_scan_button_tag needs a camera usage description set in your " \
+          "Ruby Native app settings, or scanning is unavailable in production builds."
+        )
+      end
+
+      scan_options = {}
+      scan_options[:target] = target if target
+      scan_options[:event] = event if event
+      scan_options[:submit] = true if submit
+      if formats
+        scan_options[:formats] = Array(formats).flat_map { |f| f.to_s.split(",") }.map(&:strip).reject(&:empty?)
+      end
+
+      options[:onclick] = "window.RubyNative?.scan(#{scan_options.to_json})"
+      tag.button(label, **options)
+    end
+
     def native_badge_tag(count = nil, home: nil, tab: nil)
       home = count if count && home.nil?
       tab = count if count && tab.nil?

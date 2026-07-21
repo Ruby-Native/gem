@@ -51,6 +51,50 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'class="native-back-button"'
   end
 
+  def test_native_scan_button_tag_default_label
+    html = native_scan_button_tag
+    assert_includes html, "<button"
+    assert_includes html, ">Scan</button>"
+    assert_includes html, "window.RubyNative?.scan({})"
+  end
+
+  def test_native_scan_button_tag_custom_label
+    html = native_scan_button_tag("Scan ISBN")
+    assert_includes html, ">Scan ISBN</button>"
+  end
+
+  def test_native_scan_button_tag_target
+    html = native_scan_button_tag("Scan", target: "#isbn")
+    assert_includes html, "window.RubyNative?.scan("
+    assert_includes html, "target"
+    assert_includes html, "#isbn"
+  end
+
+  def test_native_scan_button_tag_event_and_submit
+    html = native_scan_button_tag("Scan", event: "scanned", submit: true)
+    assert_includes html, "scanned"
+    assert_includes html, "submit"
+    assert_includes html, "true"
+  end
+
+  def test_native_scan_button_tag_formats_string_splits
+    html = native_scan_button_tag("Scan", target: "#isbn", formats: "ean13, upce")
+    assert_includes html, "ean13"
+    assert_includes html, "upce"
+  end
+
+  def test_native_scan_button_tag_formats_array
+    html = native_scan_button_tag("Scan", formats: %w[qr code128])
+    assert_includes html, "qr"
+    assert_includes html, "code128"
+  end
+
+  def test_native_scan_button_tag_merges_options
+    html = native_scan_button_tag("Scan", class: "btn", id: "scan-btn")
+    assert_includes html, 'class="btn"'
+    assert_includes html, 'id="scan-btn"'
+  end
+
   def test_native_badge_tag_with_count
     html = native_badge_tag(5)
     assert_includes html, 'data-native-badge'
