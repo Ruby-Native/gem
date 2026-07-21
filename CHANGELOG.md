@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Scan barcodes and QR codes with `native_scan_button_tag`.** Renders a button that opens the native camera scanner; a successful scan fills a target field and fires a `ruby-native:scan` CustomEvent, so the same call works in plain Rails, Turbo, and Inertia. iOS and Android.
+
+### Fixed
+
+- **`window.alert`, `confirm`, and `prompt` now show native dialogs on Android.** They previously did nothing, and `confirm()` / `prompt()` resolved to their cancelled value, so a page that worked in a browser silently misbehaved. Both Normal and Advanced Mode.
+- **Navbar, FAB, and tab signals now survive navigation in Advanced Mode.** `addJavascriptInterface` only binds on a real page load, so the bridge went quiet after the first navigation and native chrome stopped updating. Android only.
+- **Links to a path another tab owns now select that tab in Advanced Mode.** They pushed onto the current tab's stack instead, because the Hotwire navigator has no tab awareness. Normal Mode already did this. Android only.
+- **The Advanced Mode FAB renders in the right place and responds to taps.** It was added to a root that isn't a `FrameLayout`, so its gravity was ignored and it drew top-left underneath the WebView, which is also why taps did nothing. It now survives a back-pop or tab switch too. Android only.
+- **Advanced Mode no longer crashes when a FAB or navbar button uses a relative href.** Tapping a control whose `href` is a path like `/books/new` killed the app, because a location is parsed as a full URL before routing; relative hrefs now resolve against the app's start URL, the way deep links already did. Android only.
+- **The Advanced Mode sign-in wall now presents as a modal, matching iOS.** Sign-in paths were re-declared as a plain root screen, so sign-up and password-reset stacked a second modal on top instead of pushing inside the existing one, and any auth path that rule didn't name was missed. The whole auth flow is now one modal with internal push navigation. Android only.
+- **Tapping a non-active tab no longer bounces back to the first tab.** In an Inertia or Turbo app the `[data-native-tabs]` element briefly leaves the DOM during a client-side swap, which read as a sign-out and reset every tab. Normal Mode, Android.
+- **Detail and form pages no longer reset every tab.** Only a completely signal-less page now arms the unauthenticated reset; before, any back navigation or form redirect onto a tabbed page looked like a fresh sign-in. Normal Mode, Android.
+- **Web content follows system dark mode on Android.** The static light theme pinned `prefers-color-scheme` to light on every page. Normal Mode.
+- **Pull-to-refresh works again in Normal Mode on Android.** Compose's `PullToRefreshBox` is nested-scroll driven and a WebView never dispatches nested scroll, so the WebView now rides in a `SwipeRefreshLayout`, the same mechanism Advanced Mode uses.
+- **Tab badge counts now reach TalkBack.** `NavigationBarItem` silences the badge's own text node, so the count is exposed on the badged item's content description instead. Android only.
+- **A page with an empty `<title>` no longer shows its URL in the Advanced Mode toolbar.** `WebView.getTitle()` falls back to the scheme-stripped URL and Hotwire feeds that into the toolbar; iOS already left an empty title empty. Android only.
+- **Advanced Mode no longer crashes on launch when a layout view is missing.** Unguarded `findViewById` dereferences threw an uncaught NPE and crash-looped the activity. Android only.
+- **Malformed bridge payloads and hostile config values no longer crash the app.** An adversarial unit-test sweep across both packages found and fixed several, including a remote crash vector where the Android signal parser caught only `SerializationException` while kotlinx's JSON casts throw others.
+- **Screenshot captures report an incomplete run as a failure instead of a success.** A run that captured only some paths reported success and quietly delivered a partial set. Captures now retry a path that fails, notice a crashed app in seconds rather than waiting out the full timeout, and say plainly when screenshots are still missing.
+
 ## [0.10.22] - 2026-07-17
 
 ### Fixed
