@@ -63,6 +63,20 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, ">Scan ISBN</button>"
   end
 
+  # Without an explicit type a <button> submits the form it sits in, which is
+  # exactly where the documented usage puts it. The scan result arrives async,
+  # so the page would navigate away before it lands.
+  def test_native_scan_button_tag_does_not_submit_its_form
+    html = native_scan_button_tag("Scan", target: "#isbn")
+    assert_includes html, 'type="button"'
+  end
+
+  def test_native_scan_button_tag_type_can_be_overridden
+    html = native_scan_button_tag("Scan", type: "submit")
+    assert_includes html, 'type="submit"'
+    refute_includes html, 'type="button"'
+  end
+
   def test_native_scan_button_tag_target
     html = native_scan_button_tag("Scan", target: "#isbn")
     assert_includes html, "window.RubyNative?.scan("

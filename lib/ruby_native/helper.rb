@@ -63,6 +63,13 @@ module RubyNative
         scan_options[:formats] = Array(formats).flat_map { |f| f.to_s.split(",") }.map(&:strip).reject(&:empty?)
       end
 
+      # A bare <button> is type="submit" inside a form, and the documented usage
+      # puts this inside form_with. Without this a tap would submit the form
+      # immediately and navigate away before the async scan result arrives, and
+      # the `submit:` option (which is what opts into submitting) would be
+      # meaningless. Callers who really want a submit button can pass
+      # type: "submit" and keep it.
+      options[:type] ||= "button"
       options[:onclick] = "window.RubyNative?.scan(#{scan_options.to_json})"
       tag.button(label, **options)
     end
