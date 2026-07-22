@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **`icons:` now raises when given something other than a hash, instead of silently rendering no icon.** `icons: [ios: "...", android: "..."]` is an easy slip in ERB, and square brackets produce an array holding one hash. The per-platform lookup was skipped, the value fell back to `icon:`, and when that wasn't set the button rendered with no icon on either platform and nothing said why. Affects `navbar.button`, `menu.item`, `share_button`, `share_item`, and `native_fab_tag`.
+
 ## [0.11.0] - 2026-07-21
 
 ### Added

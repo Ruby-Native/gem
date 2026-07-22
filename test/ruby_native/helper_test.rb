@@ -209,6 +209,38 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_equal "cup.and.saucer", resolved
   end
 
+  # `icons: [ios: "...", android: "..."]` in ERB is an Array holding one Hash.
+  # It used to skip the lookup and fall back to a nil `icon:`, rendering nothing
+  # on either platform without a word about why.
+  def test_resolve_icon_raises_on_array_instead_of_hash
+    error = assert_raises(ArgumentError) do
+      RubyNative::Helper.resolve_icon(
+        icons: [ { ios: "ellipsis.circle", android: "more_horiz" } ],
+        platform: "android"
+      )
+    end
+    assert_match(/must be a Hash/, error.message)
+    assert_match(/square brackets/, error.message)
+  end
+
+  def test_resolve_icon_raises_on_string_instead_of_hash
+    assert_raises(ArgumentError) do
+      RubyNative::Helper.resolve_icon(icons: "more_horiz", platform: "android")
+    end
+  end
+
+  # The raise is about the shape of `icons:`, not whether a platform is known,
+  # so it fires on the web too rather than only inside the app.
+  def test_resolve_icon_raises_without_platform
+    assert_raises(ArgumentError) do
+      RubyNative::Helper.resolve_icon(icon: "gear", icons: [ { ios: "gear" } ], platform: nil)
+    end
+  end
+
+  def test_resolve_icon_allows_nil_icons
+    assert_equal "gear", RubyNative::Helper.resolve_icon(icon: "gear", icons: nil, platform: "ios")
+  end
+
   def test_native_navbar_tag
     html = native_navbar_tag("Today")
     assert_includes html, 'data-native-navbar="Today"'

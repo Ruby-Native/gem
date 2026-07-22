@@ -131,7 +131,20 @@ module RubyNative
     # form (`{ ios: "...", android: "..." }`). When both are given, a matching
     # `icons[platform]` wins; otherwise falls back to `icon`. Returns nil when
     # nothing resolves.
+    #
+    # A non-Hash `icons:` raises rather than falling through. `icons: [ios:
+    # "...", android: "..."]` is an easy slip in ERB and yields an Array holding
+    # one Hash, which used to skip the lookup and fall back to `icon` — usually
+    # nil, so the button rendered with no icon on either platform and nothing
+    # said why. That reads as "per-platform icons are broken" rather than "wrong
+    # bracket," and it is invisible on whichever platform you aren't testing.
     def self.resolve_icon(icon: nil, icons: nil, platform: nil)
+      if !icons.nil? && !icons.is_a?(Hash)
+        raise ArgumentError,
+          "icons: must be a Hash like { ios: \"square.and.arrow.up\", android: \"share\" }, " \
+          "got #{icons.class}. Check for square brackets instead of curly braces."
+      end
+
       if icons.is_a?(Hash) && platform
         key = platform.to_sym
         per_platform = icons[key] || icons[key.to_s]
