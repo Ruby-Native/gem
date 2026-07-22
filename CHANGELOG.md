@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- **`icons:` now raises when given something other than a hash, instead of silently rendering no icon.** `icons: [ios: "...", android: "..."]` is an easy slip in ERB, and square brackets produce an array holding one hash. The per-platform lookup was skipped, the value fell back to `icon:`, and when that wasn't set the button rendered with no icon on either platform and nothing said why. Affects `navbar.button`, `menu.item`, `share_button`, `share_item`, and `native_fab_tag`.
-- **`icons:` now works on its own, without a matching `icon:` alongside it.** A browser has no platform, so nothing in `icons:` matched and the value came back nil. That was invisible on a navbar button but raised on `native_fab_tag`, meaning `native_fab_tag(icons: { ios: "plus", android: "add" })` returned a 500 on the web while working inside the app. Falls back to `icon:` and then to any name in `icons:`, matching how the YAML config already fills a tab's icon.
+- **`icons:` now raises when given something other than a hash, instead of silently rendering no icon.** Square brackets in ERB produce an array holding one hash, which skipped the per-platform lookup and left the button with no icon on either platform and nothing explaining why. Affects `navbar.button`, `menu.item`, `share_button`, `share_item`, and `native_fab_tag`.
+- **`icons:` now works on its own, without a matching `icon:` alongside it.** A browser has no platform, so nothing matched and the value came back nil, which raised on `native_fab_tag` and returned a 500 for a page that rendered fine inside the app. It falls back to `icon:` and then to any name in `icons:`, the order the YAML config already uses for tabs.
 
 ## [0.11.0] - 2026-07-21
 
