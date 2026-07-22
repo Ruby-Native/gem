@@ -150,8 +150,24 @@ module RubyNative
         per_platform = icons[key] || icons[key.to_s]
         return per_platform if per_platform
       end
-      icon
+
+      # Nothing matched, which is every web render: `native_platform` is nil in
+      # a browser. Fall back to `icon:`, then to any name in `icons:`, the same
+      # order `RubyNative.backfill_tab_icons` uses for the YAML config.
+      #
+      # Returning nil here instead would make `icons:` alone unusable, because
+      # `native_fab_tag` raises on a nil icon and would 500 a page that renders
+      # fine inside the app. The signal element is hidden and only read by the
+      # native app, so which name survives on the web doesn't matter.
+      icon || fallback_icon(icons)
     end
+
+    def self.fallback_icon(icons)
+      return nil unless icons.is_a?(Hash)
+
+      icons[:ios] || icons["ios"] || icons[:android] || icons["android"]
+    end
+    private_class_method :fallback_icon
 
     class NavbarBuilder
       def initialize(context)

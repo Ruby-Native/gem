@@ -241,6 +241,27 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_equal "gear", RubyNative::Helper.resolve_icon(icon: "gear", icons: nil, platform: "ios")
   end
 
+  # A browser has no platform, so `icons:` alone has to resolve to something.
+  # Returning nil would make native_fab_tag raise on a page that is fine in the
+  # app. Matches how backfill_tab_icons fills a tab's flat icon.
+  def test_resolve_icon_without_platform_falls_back_to_ios_then_android
+    assert_equal "plus", RubyNative::Helper.resolve_icon(
+      icons: { ios: "plus", android: "add" }, platform: nil
+    )
+    assert_equal "add", RubyNative::Helper.resolve_icon(
+      icons: { android: "add" }, platform: nil
+    )
+  end
+
+  def test_native_fab_tag_accepts_icons_without_icon_on_web
+    html = native_fab_tag(icons: { ios: "plus", android: "add" }, href: "/posts/new")
+    assert_includes html, 'data-native-icon="plus"'
+  end
+
+  def test_native_fab_tag_still_requires_some_icon
+    assert_raises(ArgumentError) { native_fab_tag(icons: {}) }
+  end
+
   def test_native_navbar_tag
     html = native_navbar_tag("Today")
     assert_includes html, 'data-native-navbar="Today"'
