@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **The Advanced Mode navbar menu button now renders its configured icon, tinted to the navbar's foreground color.** It drew a hardcoded, untinted overflow icon that ignored `icon:` and `icons:`, so a branded bar showed no visible glyph; the toolbar's submit button and FAB are themed to match now too. An iOS-only name like `ellipsis.circle` renders the missing-icon placeholder on Android instead of a coincidental overflow dot, so give menu buttons `icons: { android: ... }`. Android only.
+- **A navbar menu button with no icon falls back to the overflow glyph instead of the missing-icon placeholder.** Both Normal and Advanced Mode, Android.
+- **The Android splash screen shows the customer's icon, not the bundled Ruby Native logo.** The per-app icon was written as a mipmap that couldn't override the splash's drawable resource, so a flavor-level `splash_icon.xml` now points the splash at it. Android only.
+
 ## [0.11.1] - 2026-07-21
 
 ### Fixed
