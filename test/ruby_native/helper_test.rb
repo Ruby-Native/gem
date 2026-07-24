@@ -501,6 +501,37 @@ class RubyNative::HelperTest < ActionView::TestCase
     refute_includes html, 'data-native-click'
   end
 
+  def test_native_navbar_tag_menu_item_action
+    html = native_navbar_tag("Page") do |navbar|
+      navbar.button icon: "gear" do |button|
+        button.item "Settings", href: "/settings", action: :replace
+      end
+    end
+
+    assert_includes html, 'data-native-href="/settings"'
+    assert_includes html, 'data-native-action="replace"'
+  end
+
+  def test_native_navbar_tag_menu_item_omits_action_by_default
+    html = native_navbar_tag("Page") do |navbar|
+      navbar.button icon: "gear" do |button|
+        button.item "Settings", href: "/settings"
+      end
+    end
+
+    refute_includes html, "data-native-action"
+  end
+
+  def test_native_navbar_tag_menu_item_rejects_unknown_action
+    assert_raises(ArgumentError) do
+      native_navbar_tag("Page") do |navbar|
+        navbar.button icon: "gear" do |button|
+          button.item "Settings", href: "/settings", action: :pop
+        end
+      end
+    end
+  end
+
   def test_native_navbar_tag_submit_button
     html = native_navbar_tag("Edit habit") do |navbar|
       navbar.submit_button title: "Save"

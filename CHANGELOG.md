@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Added
+
+- **`menu.item` accepts `action: :replace` (or `:root`) to control how its page lands.** A navbar menu item is a link with native chrome, so it now takes the same push/replace/root history semantics: `:replace` swaps the current entry in place, with no back arrow and no stack growth, which is what a page switcher wants. `:root` lands as replace for now, and the default stays push. Both Normal and Advanced Mode, iOS and Android.
+
 ### Fixed
 
 - **The Advanced Mode navbar menu button now renders its configured icon, tinted to the navbar's foreground color.** It drew a hardcoded, untinted overflow icon that ignored `icon:` and `icons:`, so a branded bar showed no visible glyph; the toolbar's submit button and FAB are themed to match now too. An iOS-only name like `ellipsis.circle` renders the missing-icon placeholder on Android instead of a coincidental overflow dot, so give menu buttons `icons: { android: ... }`. Android only.

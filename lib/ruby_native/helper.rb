@@ -85,6 +85,19 @@ module RubyNative
       tag.div(data: data, hidden: true)
     end
 
+    PRESENTATIONS = %w[push replace root].freeze
+
+    # Validates a push/replace/root landing value. Returns the value as a
+    # string, raises otherwise.
+    def self.validate_presentation(value, label: "presentation")
+      value = value.to_s
+      unless PRESENTATIONS.include?(value)
+        raise ArgumentError,
+          "#{label} must be :push, :replace, or :root, got #{value.inspect}"
+      end
+      value
+    end
+
     def native_navbar_tag(title = nil, pull_to_refresh: true, &block)
       builder = NavbarBuilder.new(self)
       capture(builder, &block) if block
@@ -254,13 +267,14 @@ module RubyNative
         @items = []
       end
 
-      def item(title, href: nil, click: nil, icon: nil, icons: nil, selected: false)
+      def item(title, href: nil, click: nil, icon: nil, icons: nil, selected: false, action: nil)
         resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_menu_item: "", native_title: title }
         data[:native_href] = href if href
         data[:native_click] = click if click
         data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
+        data[:native_action] = RubyNative::Helper.validate_presentation(action, label: "action") if action
         add(@context.tag.div(data: data))
       end
 
