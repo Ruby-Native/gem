@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Overscroll no longer rubber-bands to white in Advanced Mode.** Its web view was left opaque, so WKWebView painted its own white background across the whole scroll extent and covered whatever the page set on `html`, including the gap the pull-to-refresh spinner opens. `native_overscroll_tag` and `appearance.background_color` now both reach the overscroll area, as Normal Mode has done since 0.5.0. That is the release that introduced the helper, so it has never worked in Advanced Mode until now. iOS only.
 - **The Advanced Mode navbar menu button now renders its configured icon, tinted to the navbar's foreground color.** It drew a hardcoded, untinted overflow icon that ignored `icon:` and `icons:`, so a branded bar showed no visible glyph; the toolbar's submit button and FAB are themed to match now too. An iOS-only name like `ellipsis.circle` renders the missing-icon placeholder on Android instead of a coincidental overflow dot, so give menu buttons `icons: { android: ... }`. Android only.
 - **A navbar menu button with no icon falls back to the overflow glyph instead of the missing-icon placeholder.** Both Normal and Advanced Mode, Android.
 - **The Android splash screen shows the customer's icon, not the bundled Ruby Native logo.** The per-app icon was written as a mipmap that couldn't override the splash's drawable resource, so a flavor-level `splash_icon.xml` now points the splash at it. Android only.
