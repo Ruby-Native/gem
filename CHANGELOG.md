@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **`menu.item` accepts `action: :replace` (or `:root`) to control how its page lands.** A navbar menu item is a link with native chrome, so it now takes the same push/replace/root history semantics: `:replace` swaps the current entry in place, with no back arrow and no stack growth, which is what a page switcher wants. `:root` lands as replace for now, and the default stays push. Both Normal and Advanced Mode, iOS and Android.
+- **`menu.item` accepts `action: :replace` to control how its page lands.** A navbar menu item is a link with native chrome, so it now takes the same push/replace history semantics: `:replace` swaps the current entry in place, with no back arrow and no stack growth, which is what a page switcher wants. The default stays push. Both Normal and Advanced Mode, iOS and Android.
+- **`navbar.button position: :title` turns the nav-bar title into a dropdown menu.** The title becomes a menu button, the native counterpart of SwiftUI's `toolbarTitleMenu`: the button's `menu` items switch the current view and the title shows the selected one with a checkmark, defaulting to that item's label. Pair it with `action: :replace` for a page switcher. Both Normal and Advanced Mode, iOS and Android.
 
 ### Fixed
 

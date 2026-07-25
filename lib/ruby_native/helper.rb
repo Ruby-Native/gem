@@ -85,15 +85,20 @@ module RubyNative
       tag.div(data: data, hidden: true)
     end
 
-    PRESENTATIONS = %w[push replace root].freeze
+    # No :root. Landing a page as the tab root — dropping what is behind it —
+    # is a distinct operation from replacing the current entry, and no shell
+    # implements it: every one of them mapped :root onto replace, which unwinds
+    # nothing. Offering the word without the behavior is worse than not
+    # offering it, so it is out until a shell can honor it.
+    PRESENTATIONS = %w[push replace].freeze
 
-    # Validates a push/replace/root landing value. Returns the value as a
-    # string, raises otherwise.
+    # Validates a push/replace landing value. Returns the value as a string,
+    # raises otherwise.
     def self.validate_presentation(value, label: "presentation")
       value = value.to_s
       unless PRESENTATIONS.include?(value)
         raise ArgumentError,
-          "#{label} must be :push, :replace, or :root, got #{value.inspect}"
+          "#{label} must be :push or :replace, got #{value.inspect}"
       end
       value
     end
