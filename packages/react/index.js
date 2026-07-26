@@ -86,6 +86,23 @@ export function NativeForm() {
 }
 
 /**
+ * Declares that this page lands as a root, with nothing behind it and no back
+ * affordance.
+ *
+ * Emits only the element half of `native_presentation_tag`, so Advanced Mode
+ * applies it once the page has rendered rather than before the navigation
+ * commits. Set the `Native-Presentation` response header from the controller as
+ * well to get the earlier path.
+ *
+ * @param {object} props
+ * @param {"root"} [props.intent]
+ * @returns {import("react").ReactElement}
+ */
+export function NativePresentation({ intent = "root" } = {}) {
+  return createElement("div", { "data-native-presentation": intent, hidden: true })
+}
+
+/**
  * @returns {import("react").ReactElement}
  */
 export function NativeReview() {

@@ -86,6 +86,19 @@ export const NativeForm = defineComponent({
   }
 })
 
+// Declares that this page lands as a root, with nothing behind it and no back
+// affordance. Emits only the element half of `native_presentation_tag`, so
+// Advanced Mode applies it once the page has rendered rather than before the
+// navigation commits. Set the `Native-Presentation` response header from the
+// controller as well to get the earlier path.
+export const NativePresentation = defineComponent({
+  name: "NativePresentation",
+  props: { intent: { type: String, default: "root" } },
+  render() {
+    return h("div", { "data-native-presentation": this.intent, hidden: true })
+  }
+})
+
 export const NativeReview = defineComponent({
   name: "NativeReview",
   render() {
