@@ -26,6 +26,32 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'hidden'
   end
 
+  def test_native_presentation_tag
+    html = native_presentation_tag :root
+    assert_includes html, 'data-native-presentation="root"'
+    assert_includes html, 'hidden'
+  end
+
+  def test_native_presentation_tag_accepts_a_string
+    assert_includes native_presentation_tag("root"), 'data-native-presentation="root"'
+  end
+
+  # The header is the half Advanced Mode reads, and it has to be set before the
+  # response is committed or the whole approach is decided too late.
+  def test_native_presentation_tag_sets_the_response_header
+    native_presentation_tag :root
+    assert_equal "root", response.headers["Native-Presentation"]
+  end
+
+  # Raise rather than warn-and-drop, same as the menu action vocabulary: a
+  # presentation the shell silently ignores lands the page in the wrong place
+  # with nothing on screen to explain why.
+  def test_native_presentation_tag_rejects_an_unknown_intent
+    error = assert_raises(ArgumentError) { native_presentation_tag :modal }
+    assert_includes error.message, ":root"
+    assert_includes error.message, '"modal"'
+  end
+
   def test_native_back_button_tag
     html = native_back_button_tag
     assert_includes html, "<button"

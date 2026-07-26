@@ -90,17 +90,82 @@ module RubyNative
     # implements it: every one of them mapped :root onto replace, which unwinds
     # nothing. Offering the word without the behavior is worse than not
     # offering it, so it is out until a shell can honor it.
-    PRESENTATIONS = %w[push replace].freeze
+    ACTIONS = %w[push replace].freeze
 
     # Validates a push/replace landing value. Returns the value as a string,
     # raises otherwise.
-    def self.validate_presentation(value, label: "presentation")
+    def self.validate_action(value, label: "action")
       value = value.to_s
-      unless PRESENTATIONS.include?(value)
+      unless ACTIONS.include?(value)
         raise ArgumentError,
           "#{label} must be :push or :replace, got #{value.inspect}"
       end
       value
+    end
+
+    # The landing intents a page can declare about itself. Only :root so far.
+    # :modal is the obvious second member (both shells hardcode a /new + /edit
+    # rule today that no app can reach), which is why this is a vocabulary
+    # rather than a boolean tag.
+    PRESENTATION_INTENTS = %w[root].freeze
+
+    # Declares that this page is a root: it lands with nothing behind it, and no
+    # back affordance, wherever it lands.
+    #
+    #   <%= native_presentation_tag :root %>
+    #
+    # Emits the fact on two channels, because the shells need it at two
+    # different moments and neither channel reaches both:
+    #
+    # 1. A `data-native-presentation` element, reported with every other signal
+    #    once the page has rendered. This is what Normal Mode reads, and Normal
+    #    Mode can act on it late: it has no push stack, so suppressing back is
+    #    not a navigation and nothing refetches.
+    #
+    # 2. A `Native-Presentation` response header. Advanced Mode has to decide
+    #    before the navigation commits, or it pushes and then visibly corrects
+    #    itself. On a form submission Turbo has already fetched the destination
+    #    by the time it proposes the visit, so the header is readable at
+    #    `turbo:before-fetch-response` — before the proposal — and the header is
+    #    the only part of that response readable synchronously, since the body
+    #    arrives as a promise that consuming would take from Turbo.
+    #
+    # Nothing is declared at the origin. Both channels ride the response for the
+    # page itself, so a redirect chain carries the intent to wherever it actually
+    # lands rather than to wherever the link pointed.
+    #
+    # In Advanced Mode this takes effect before the navigation commits when the
+    # page arrives from a form submission, because that is the only case where
+    # Turbo has already fetched the destination by the time it proposes the
+    # visit. A link tap, a deep link and a cold boot are proposed before anything
+    # is fetched, so those fall back to the element and the shell corrects after
+    # the page renders. Normal Mode always uses the element.
+    #
+    # Do not call this inside a `cache` block. On a cache hit the element comes
+    # back from the cache and the header is never set, which silently leaves
+    # Advanced Mode with only the slower path.
+    def native_presentation_tag(presentation)
+      value = presentation.to_s
+      unless PRESENTATION_INTENTS.include?(value)
+        raise ArgumentError,
+          "native_presentation_tag must be #{PRESENTATION_INTENTS.map { |i| ":#{i}" }.join(" or ")}, " \
+          "got #{value.inspect}"
+      end
+
+      # `respond_to?` rather than a nil check alone: ActionView forwards it to
+      # the controller for the delegated methods, so a view rendered without one
+      # answers false here instead of raising a DelegationError.
+      if respond_to?(:response) && response
+        if Rails.env.development? && response.committed?
+          Rails.logger.warn(
+            "[ruby_native] native_presentation_tag rendered after the response was committed, " \
+            "so Advanced Mode will not see it before the navigation commits."
+          )
+        end
+        response.headers["Native-Presentation"] = value
+      end
+
+      tag.div(data: { native_presentation: value }, hidden: true)
     end
 
     def native_navbar_tag(title = nil, pull_to_refresh: true, &block)
@@ -279,7 +344,7 @@ module RubyNative
         data[:native_click] = click if click
         data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
-        data[:native_action] = RubyNative::Helper.validate_presentation(action, label: "action") if action
+        data[:native_action] = RubyNative::Helper.validate_action(action) if action
         add(@context.tag.div(data: data))
       end
 
