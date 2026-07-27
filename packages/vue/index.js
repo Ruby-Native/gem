@@ -12,7 +12,15 @@ import { defineComponent, h } from "vue"
  */
 
 /**
- * @typedef {"leading" | "trailing"} NativeButtonPosition
+ * "title" turns the nav-bar title into a dropdown menu. Give the button a
+ * `menu` and no icon or label of its own.
+ * @typedef {"leading" | "trailing" | "title"} NativeButtonPosition
+ */
+
+/**
+ * How a menu item's page lands. "replace" swaps the current history entry,
+ * which is what a page switcher wants.
+ * @typedef {"push" | "replace"} NativeAction
  */
 
 import("@inertiajs/vue3").then(m => { window.__inertiaRouter = m.router }).catch(() => {})
@@ -153,7 +161,8 @@ export const NativeMenuItem = defineComponent({
     click: String,
     icon: String,
     icons: /** @type {import("vue").PropType<NativeIcons>} */ (Object),
-    selected: { type: Boolean, default: undefined }
+    selected: { type: Boolean, default: undefined },
+    action: /** @type {import("vue").PropType<NativeAction>} */ (String)
   },
   render() {
     const resolved = resolveIcon(this.icon, this.icons)
@@ -163,6 +172,30 @@ export const NativeMenuItem = defineComponent({
     if (this.href) attrs["data-native-href"] = this.href
     if (this.click) attrs["data-native-click"] = this.click
     if (resolved) attrs["data-native-icon"] = resolved
+    if (this.selected) attrs["data-native-selected"] = ""
+    if (this.action) attrs["data-native-action"] = this.action
+    return h("div", attrs)
+  }
+})
+
+/**
+ * A segmented button in the nav bar. Render the same set on each sibling page
+ * and mark the current one `selected`. iOS only.
+ */
+export const NativeSegment = defineComponent({
+  name: "NativeSegment",
+  props: {
+    title: String,
+    href: String,
+    click: String,
+    selected: { type: Boolean, default: undefined }
+  },
+  render() {
+    /** @type {Record<string, any>} */
+    const attrs = { "data-native-segment": "" }
+    if (this.title) attrs["data-native-title"] = this.title
+    if (this.href) attrs["data-native-href"] = this.href
+    if (this.click) attrs["data-native-click"] = this.click
     if (this.selected) attrs["data-native-selected"] = ""
     return h("div", attrs)
   }

@@ -14,7 +14,15 @@ import("@inertiajs/react").then(m => { window.__inertiaRouter = m.router }).catc
  */
 
 /**
- * @typedef {"leading" | "trailing"} NativeButtonPosition
+ * "title" turns the nav-bar title into a dropdown menu. Give the button a
+ * `menu` and no icon or label of its own.
+ * @typedef {"leading" | "trailing" | "title"} NativeButtonPosition
+ */
+
+/**
+ * How a menu item's page lands. "replace" swaps the current history entry,
+ * which is what a page switcher wants.
+ * @typedef {"push" | "replace"} NativeAction
  */
 
 function rubyNativePlatform() {
@@ -156,9 +164,10 @@ export function NativeButton({ position = "trailing", icon, icons, title, href, 
  * @param {string} [props.icon]
  * @param {NativeIcons} [props.icons]
  * @param {boolean} [props.selected]
+ * @param {NativeAction} [props.action]
  * @returns {import("react").ReactElement}
  */
-export function NativeMenuItem({ title, href, click, icon, icons, selected }) {
+export function NativeMenuItem({ title, href, click, icon, icons, selected, action }) {
   const resolved = resolveIcon(icon, icons)
   /** @type {Record<string, any>} */
   const props = { "data-native-menu-item": true }
@@ -166,6 +175,27 @@ export function NativeMenuItem({ title, href, click, icon, icons, selected }) {
   if (href) props["data-native-href"] = href
   if (click) props["data-native-click"] = click
   if (resolved) props["data-native-icon"] = resolved
+  if (selected) props["data-native-selected"] = ""
+  if (action) props["data-native-action"] = action
+  return createElement("div", props)
+}
+
+/**
+ * A segmented button in the nav bar. Render the same set on each sibling page
+ * and mark the current one `selected`. iOS only.
+ * @param {object} props
+ * @param {string} [props.title]
+ * @param {string} [props.href]
+ * @param {string} [props.click]
+ * @param {boolean} [props.selected]
+ * @returns {import("react").ReactElement}
+ */
+export function NativeSegment({ title, href, click, selected }) {
+  /** @type {Record<string, any>} */
+  const props = { "data-native-segment": "" }
+  if (title) props["data-native-title"] = title
+  if (href) props["data-native-href"] = href
+  if (click) props["data-native-click"] = click
   if (selected) props["data-native-selected"] = ""
   return createElement("div", props)
 }
