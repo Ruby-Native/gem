@@ -164,6 +164,75 @@ class RubyNative::OAuthMiddlewareTest < Minitest::Test
     assert_equal "/menu", headers["location"]
   end
 
+  # An off-scheme callback_scheme is an attempt to have the server redirect the
+  # session token to a host the attacker controls. None of these may be stored.
+  EXFILTRATION_SCHEMES = [
+    "https://evil.example.com",
+    "http://evil.example.com",
+    "//evil.example.com",
+    "rubynative-app://evil.example.com",
+    "rubynative-app.evil.example.com",
+    "rubynative-app@evil.example.com",
+    "rubynative-app%2f%2fevil.example.com",
+    "rubynative-app/../..",
+    "javascript:fetch('https://evil.example.com')",
+    "https",
+    "-rubynative-app",
+    "notrubynative-app",
+    "rubynative-app\nLocation: https://evil.example.com"
+  ].freeze
+
+  def test_off_scheme_callback_scheme_does_not_set_a_tracking_cookie
+    EXFILTRATION_SCHEMES.each do |scheme|
+      app = build_middleware([302, {"location" => "https://provider.com/oauth"}, [""]])
+      env = Rack::MockRequest.env_for("/auth/test_provider?ruby_native=1&callback_scheme=#{CGI.escape(scheme)}")
+
+      _status, headers, _body = app.call(env)
+
+      refute Array(headers["set-cookie"]).join("\n").include?(RubyNative::OAuthMiddleware::COOKIE_NAME),
+        "Expected #{scheme.inspect} to be rejected, but a tracking cookie was set"
+    end
+  end
+
+  def test_off_scheme_cookie_is_not_honored_on_the_callback
+    EXFILTRATION_SCHEMES.each do |scheme|
+      app = build_middleware([302, {"location" => "/menu", "set-cookie" => "_session_id=abc123"}, [""]])
+      env = Rack::MockRequest.env_for("/auth/callback",
+        "HTTP_COOKIE" => "#{RubyNative::OAuthMiddleware::COOKIE_NAME}=#{sign_cookie(scheme)}")
+
+      status, headers, _body = app.call(env)
+
+      assert_equal 302, status
+      assert_equal "/menu", headers["location"],
+        "Expected a signed #{scheme.inspect} cookie to be ignored, not redirected to"
+      refute_includes headers["location"], "token=",
+        "Expected no token in the redirect for #{scheme.inspect}"
+    end
+  end
+
+  def test_off_scheme_auth_failure_is_not_redirected_to_the_attacker
+    app = build_middleware([302, {"location" => "/auth/failure?message=access_denied"}, [""]])
+    env = Rack::MockRequest.env_for("/auth/callback",
+      "HTTP_COOKIE" => "#{RubyNative::OAuthMiddleware::COOKIE_NAME}=#{sign_cookie("https://evil.example.com")}")
+
+    _status, headers, _body = app.call(env)
+
+    assert_equal "/auth/failure?message=access_denied", headers["location"]
+  end
+
+  def test_accepts_the_schemes_the_native_apps_actually_build
+    ["rubynative-com-example-app", "rubynative-dev-rubynative-ios-preview",
+      "rubynative-screenshot", "rubynative-com-my_app-store", "rubynative-COM-Example-App"].each do |scheme|
+      app = build_middleware([302, {"location" => "https://provider.com/oauth"}, [""]])
+      env = Rack::MockRequest.env_for("/auth/test_provider?ruby_native=1&callback_scheme=#{scheme}")
+
+      _status, headers, _body = app.call(env)
+
+      assert Array(headers["set-cookie"]).join("\n").include?(RubyNative::OAuthMiddleware::COOKIE_NAME),
+        "Expected #{scheme.inspect} to be accepted"
+    end
+  end
+
   private
 
   def build_middleware(response)

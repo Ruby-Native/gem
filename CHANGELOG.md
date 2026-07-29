@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Security
+
+- **A crafted native sign-in link can no longer send someone's session to another app.** The OAuth flow hands the finished session back to the app through the custom URL scheme it registered, and that scheme arrived as a plain query parameter, so a link that named a different destination was honored. The server now accepts only the `rubynative-` scheme shape the apps actually register and treats anything else as a web sign-in, which completes in the browser and hands back nothing. Only apps using `auth.oauth_paths` were affected.
+
 ### Fixed
 
 - **Tapping a link while a page is still loading no longer shows an error screen.** Normal Mode, iOS only.

@@ -2,6 +2,14 @@ module RubyNative
   class OAuthMiddleware
     COOKIE_NAME = "_ruby_native_oauth"
 
+    # The scheme the native app registers is always "rubynative-" plus its bundle
+    # identifier with dots as dashes, built by OAuthManager.callbackScheme on both
+    # platforms. The scheme arrives as a request param and ends up as the target of
+    # the redirect carrying the session token, so anything that could name a
+    # different origin -- a colon, slash, dot, "@", or percent escape -- is
+    # rejected outright rather than sanitized.
+    CALLBACK_SCHEME = /\Arubynative-[a-z0-9][a-z0-9_-]{0,127}\z/i
+
     def initialize(app)
       @app = app
     end
@@ -10,7 +18,7 @@ module RubyNative
       request = ActionDispatch::Request.new(env)
       on_oauth_path = oauth_path?(request)
       started_native_oauth = on_oauth_path && request.params["ruby_native"] == "1"
-      callback_scheme = request.params["callback_scheme"] if started_native_oauth
+      callback_scheme = permitted_scheme(request.params["callback_scheme"]) if started_native_oauth
 
       status, headers, body = @app.call(env)
 
@@ -23,7 +31,7 @@ module RubyNative
         set_cookie(headers, callback_scheme)
       end
 
-      stored_scheme = read_cookie(request)
+      stored_scheme = permitted_scheme(read_cookie(request))
 
       if stored_scheme && redirect?(status)
         location = headers["location"] || headers["Location"]
@@ -69,6 +77,20 @@ module RubyNative
     end
 
     private
+
+    # Returns the scheme only when it matches CALLBACK_SCHEME. A rejected scheme
+    # reads as "no native app asked for this", so the flow falls through as an
+    # ordinary web sign-in and no token is ever minted.
+    def permitted_scheme(value)
+      return nil if value.blank?
+      return value if value.match?(CALLBACK_SCHEME)
+
+      Rails.logger.warn do
+        "[RubyNative] Rejected OAuth callback_scheme #{value.to_s.truncate(64).inspect}: " \
+          "expected the app's own rubynative-<bundle-id> scheme"
+      end
+      nil
+    end
 
     def oauth_path?(request)
       oauth_paths.any? { |p| request.path == p }

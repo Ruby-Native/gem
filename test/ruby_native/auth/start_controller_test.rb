@@ -50,4 +50,19 @@ class RubyNative::Auth::StartControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :bad_request
   end
+
+  def test_rejects_off_scheme_callback_scheme
+    ["https://evil.example.com", "rubynative-app.evil.example.com",
+      "javascript:alert(1)", "notrubynative-app"].each do |scheme|
+      get "/native/auth/start/google", params: {callback_scheme: scheme}
+
+      assert_response :bad_request, "Expected #{scheme.inspect} to be rejected"
+    end
+  end
+
+  def test_rejects_missing_callback_scheme
+    get "/native/auth/start/google"
+
+    assert_response :bad_request
+  end
 end
