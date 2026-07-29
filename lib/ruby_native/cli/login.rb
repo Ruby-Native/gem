@@ -1,3 +1,4 @@
+require "digest"
 require "securerandom"
 require "net/http"
 require "uri"
@@ -13,14 +14,18 @@ module RubyNative
       end
 
       def run
-        code = SecureRandom.hex(20)
-        url = "#{HOST}/cli/session/new?code=#{code}"
+        # Only the hash goes through the browser. Claiming the token needs this
+        # verifier, which never leaves the machine, so a copy of the authorize
+        # URL is not enough for anyone else to collect the session.
+        verifier = SecureRandom.hex(32)
+        challenge = Digest::SHA256.hexdigest(verifier)
+        url = "#{HOST}/cli/session/new?challenge=#{challenge}"
 
         puts "Opening browser to authorize..."
         open_browser(url)
         puts "Waiting for authorization..."
 
-        token = poll_for_token(code)
+        token = poll_for_token(verifier)
 
         if token
           Credentials.save(token)
@@ -44,8 +49,8 @@ module RubyNative
         end
       end
 
-      def poll_for_token(code)
-        uri = URI("#{HOST}/cli/session/poll?code=#{code}")
+      def poll_for_token(verifier)
+        uri = URI("#{HOST}/cli/session/poll?verifier=#{verifier}")
         attempts = 0
         max_attempts = 60
 
