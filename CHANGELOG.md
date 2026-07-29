@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Tapping a link while a page is still loading no longer shows an error screen.** Starting a navigation cancels the one in flight, which WebKit reports as a failure like any other, so a slow page plus an impatient tap put an error over the screen that was about to render. A cancellation is the user getting what they asked for, so it is ignored now; real failures still surface. Normal Mode, iOS only.
 - **The QR code `ruby_native preview` prints now scans on Android.** It was drawn with block glyphs, which take the terminal's foreground color, so every dark terminal theme printed the code inverted: light modules on a dark background. iOS decodes an inverted code and the Android scanner does not, so Android sat on the viewfinder and never resolved anything while iOS worked fine. The code is painted as background colors now, given as 24-bit RGB rather than as any palette color. Terminal themes remap both the sixteen basic colors and the 256-color cube, so a palette-based "black and white" arrived as a mid-gray in one terminal, as orange in another, and swapped outright in a third, which is the same inversion in a new costume. A literal RGB value has no lookup to remap, so the contrast and the polarity are now identical everywhere. The quiet zone is also the full four modules on all four sides, rather than two on the top and bottom.
 
 ## [0.11.2] - 2026-07-27
