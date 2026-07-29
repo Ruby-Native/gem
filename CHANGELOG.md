@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Security
 
+- **Restoring a purchase now grants the subscription to the account that bought it.** The account came from the request rather than from the purchase, so one paid subscription could be restored onto any number of other accounts. The account is now read from the purchase the transaction was actually made against, and a transaction already restored does not fire the callback a second time. Apps using in-app purchases need one migration: run `bin/rails generate ruby_native:iap` again, then `bin/rails db:migrate`.
+
 - **A crafted native sign-in link can no longer send someone's session to another app.** The OAuth flow hands the finished session back to the app through the custom URL scheme it registered, and that scheme arrived as a plain query parameter, so a link that named a different destination was honored. The server now accepts only the `rubynative-` scheme shape the apps actually register and treats anything else as a web sign-in, which completes in the browser and hands back nothing. Only apps using `auth.oauth_paths` were affected.
 
 ### Fixed

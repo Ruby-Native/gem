@@ -8,13 +8,20 @@ module RubyNative
 
       source_root File.expand_path("templates", __dir__)
 
+      # Must increment within a single run, or the second migration below collides
+      # with the first on a bare `Time.now` timestamp.
       def self.next_migration_number(dirname)
-        Time.now.utc.strftime("%Y%m%d%H%M%S")
+        ActiveRecord::Migration.next_migration_number(current_migration_number(dirname) + 1)
       end
 
-      def copy_migration
+      # Re-running this generator on an app that already has the first migration
+      # reports it identical and creates only what is missing, so it doubles as
+      # the upgrade path.
+      def copy_migrations
         migration_template "create_ruby_native_purchase_intents.rb",
           "db/migrate/create_ruby_native_purchase_intents.rb"
+        migration_template "add_restored_transaction_id_to_ruby_native_purchase_intents.rb",
+          "db/migrate/add_restored_transaction_id_to_ruby_native_purchase_intents.rb"
       end
 
       def print_next_steps

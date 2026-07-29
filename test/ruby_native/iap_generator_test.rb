@@ -1,0 +1,42 @@
+require "test_helper"
+require "rails/generators/test_case"
+require "generators/ruby_native/iap_generator"
+
+class RubyNative::Generators::IapGeneratorTest < Rails::Generators::TestCase
+  tests RubyNative::Generators::IapGenerator
+  destination File.expand_path("../../tmp/iap_generator", __dir__)
+  setup :prepare_destination
+
+  def test_copies_both_migrations_with_increasing_numbers
+    run_generator
+
+    assert_migration "db/migrate/create_ruby_native_purchase_intents.rb"
+    assert_migration "db/migrate/add_restored_transaction_id_to_ruby_native_purchase_intents.rb"
+
+    create = migration_number("db/migrate/create_ruby_native_purchase_intents.rb")
+    add_column = migration_number("db/migrate/add_restored_transaction_id_to_ruby_native_purchase_intents.rb")
+
+    assert create < add_column,
+      "The column migration must sort after the create, got #{create} then #{add_column}"
+  end
+
+  # Re-running on an app that already ran the create migration is the upgrade
+  # path for the restored_transaction_id column.
+  def test_rerunning_adds_only_the_missing_migration
+    run_generator
+    first_create = migration_file_name("db/migrate/create_ruby_native_purchase_intents.rb")
+    FileUtils.rm(migration_file_name("db/migrate/add_restored_transaction_id_to_ruby_native_purchase_intents.rb"))
+
+    run_generator
+
+    assert_equal first_create, migration_file_name("db/migrate/create_ruby_native_purchase_intents.rb"),
+      "The existing migration should be reported identical, not renumbered"
+    assert_migration "db/migrate/add_restored_transaction_id_to_ruby_native_purchase_intents.rb"
+  end
+
+  private
+
+  def migration_number(relative)
+    File.basename(migration_file_name(relative)).to_i
+  end
+end

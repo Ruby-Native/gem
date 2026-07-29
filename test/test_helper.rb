@@ -54,6 +54,7 @@ ActiveRecord::Schema.define do
     t.string :success_path
     t.string :status, null: false, default: "pending"
     t.string :environment
+    t.string :restored_transaction_id
     t.timestamps
   end
   add_index :ruby_native_purchase_intents, :uuid, unique: true
