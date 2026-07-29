@@ -165,25 +165,20 @@ module RubyNative
         require "rqrcode"
 
         qr = RQRCode::QRCode.new(url, level: :l)
-        modules = qr.modules
-        size = modules.length
-        quiet_h = 4
-        quiet_v = 2
 
-        dark = "██"
-        light = "  "
-
+        # Painted as background colors, not block glyphs: a glyph takes the terminal's
+        # foreground color, which prints the code inverted on a dark theme, and Android
+        # (unlike iOS) will not decode an inverted code. Truecolor rather than any
+        # palette index, because terminals remap both the 16 basic colors and the 256
+        # cube, which is how "white" came out as a mid-gray in one terminal and as
+        # orange in another. 24-bit RGB is a literal value with no lookup, so the
+        # contrast and the polarity are the same everywhere.
         puts ""
-        (0...(size + quiet_v * 2)).each do |r|
-          line = +""
-          (0...(size + quiet_h * 2)).each do |c|
-            mr = r - quiet_v
-            mc = c - quiet_h
-            inside = mr >= 0 && mr < size && mc >= 0 && mc < size
-            line << (inside && modules[mr][mc] ? dark : light)
-          end
-          puts line
-        end
+        print qr.as_ansi(
+          light: "\e[48;2;255;255;255m",
+          dark: "\e[48;2;0;0;0m",
+          quiet_zone_size: 4
+        )
         puts ""
         puts url
         puts ""

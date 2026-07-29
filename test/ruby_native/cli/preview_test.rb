@@ -108,6 +108,60 @@ class PreviewTest < Minitest::Test
     refute_match(/Preview app/, out)
   end
 
+  # Block glyphs take the terminal's foreground color, so a dark theme printed the
+  # code inverted and ZXing on Android refused to decode it.
+  def test_display_qr_sets_backgrounds_rather_than_drawing_glyphs
+    out, _err = capture_io do
+      @preview.send(:display_qr, "https://example.trycloudflare.com")
+    end
+    assert_includes out, "\e[48;2;255;255;255m"
+    assert_includes out, "\e[48;2;0;0;0m"
+    refute_includes out, "█"
+  end
+
+  # Terminals remap both the 16 basic colors and the 256-color cube, which turned
+  # "white" into a mid-gray in one terminal and orange in another. Only literal RGB
+  # renders the same everywhere, so no palette index may creep back in.
+  def test_display_qr_uses_no_palette_indexes
+    out, _err = capture_io do
+      @preview.send(:display_qr, "https://example.trycloudflare.com")
+    end
+    refute_includes out, "\e[47m"
+    refute_includes out, "\e[40m"
+    refute_match(/\e\[48;5;/, out)
+  end
+
+  def test_display_qr_quiet_zone_is_four_modules_on_every_side
+    url = "https://example.trycloudflare.com"
+    out, _err = capture_io { @preview.send(:display_qr, url) }
+
+    light = "\e[48;2;255;255;255m"
+    dark_bg = "\e[48;2;0;0;0m"
+    rows = out.split("\e[m\n").select { |row| row.include?("\e[48;2;") }
+    grid = rows.map do |row|
+      cells = []
+      dark = nil
+      row.scan(/\e\[48;2;(?:255;255;255|0;0;0)m|  /) do |token|
+        case token
+        when light then dark = false
+        when dark_bg then dark = true
+        else cells << dark
+        end
+      end
+      cells
+    end
+
+    size = RQRCode::QRCode.new(url, level: :l).modules.length
+    assert_equal size + 8, grid.length
+    assert_equal [size + 8], grid.map(&:length).uniq
+
+    light = ->(cells) { cells.all? { |cell| cell == false } }
+    assert light.call(grid.first(4).flatten), "top quiet zone"
+    assert light.call(grid.last(4).flatten), "bottom quiet zone"
+    assert light.call(grid[4...-4].flat_map { |row| row.first(4) }), "left quiet zone"
+    assert light.call(grid[4...-4].flat_map { |row| row.last(4) }), "right quiet zone"
+  end
+
   private
 
   def stub_http_response(response)
