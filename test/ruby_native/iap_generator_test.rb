@@ -34,6 +34,23 @@ class RubyNative::Generators::IapGeneratorTest < Rails::Generators::TestCase
     assert_migration "db/migrate/add_restored_transaction_id_to_ruby_native_purchase_intents.rb"
   end
 
+  # A tripwire, not a behavior test. Every app that has already run this
+  # generator holds a byte-identical copy of this template, and re-running is how
+  # such an app picks up migrations added later: Rails compares the two and only
+  # calls it identical when they match exactly. Any edit here -- a comment, a
+  # trailing newline -- makes it a conflict instead, which raises and aborts the
+  # run before the newer migrations are copied, so upgrading apps get none of
+  # them. To change the schema, add a template alongside it and copy that too.
+  def test_the_create_migration_template_is_frozen
+    path = File.expand_path(
+      "../../lib/generators/ruby_native/templates/create_ruby_native_purchase_intents.rb", __dir__
+    )
+
+    assert_equal "f4c9967e25a041ba68294929280a865dd625a72771a12f892fc080a611f5f4d5",
+      Digest::SHA256.hexdigest(File.binread(path)),
+      "create_ruby_native_purchase_intents.rb changed. Read the comment above this test first."
+  end
+
   private
 
   def migration_number(relative)

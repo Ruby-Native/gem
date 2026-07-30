@@ -45,9 +45,9 @@ module RubyNative
 
         # Apple reissues a transaction id on every renewal, so a restore of the
         # same one is a repeat and must not fire the callback again.
-        return if intent.restored_transaction_id == transaction_id
+        return if dedup_available? && intent.restored_transaction_id == transaction_id
 
-        intent.update!(intent_attributes(transaction).merge(restored_transaction_id: transaction_id))
+        intent.update!(intent_attributes(transaction))
 
         event = Event.new(
           type: "subscription.created",
@@ -73,7 +73,19 @@ module RubyNative
         attributes = {status: :completed}
         environment = transaction["environment"]&.downcase
         attributes[:environment] = environment if PurchaseIntent.environments.key?(environment)
+        attributes[:restored_transaction_id] = transaction["transactionId"] if dedup_available?
         attributes
+      end
+
+      # Deduping needs a column that arrives in a migration, and an app can be on
+      # this version of the gem before it has been run. Restoring to the right
+      # account is the part that matters and needs no column, so a missing one
+      # costs the repeat-callback guard and nothing else -- which is how restore
+      # behaved before the column existed anyway. Writing to it regardless would
+      # raise, and the app reports a restore as successful without reading the
+      # response, so the customer would be told "Restored!" over a 500.
+      def dedup_available?
+        PurchaseIntent.column_names.include?("restored_transaction_id")
       end
     end
   end

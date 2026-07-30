@@ -135,6 +135,40 @@ class RubyNative::IAP::RestoresControllerTest < ActionDispatch::IntegrationTest
     assert_equal "t_1", intent.restored_transaction_id
   end
 
+  # An app can be on this version of the gem before its migration has been run.
+  # The restore has to keep working: the app never reads the response, so a 500
+  # here reaches the customer as "Restored!" over an entitlement that was never
+  # granted.
+  def test_restores_without_the_dedup_column
+    without_dedup_column do
+      intent = create_intent(customer_id: "user_42")
+      stub_transaction("jws", intent: intent)
+
+      event = capture_event { restore(customer_id: "user_42") }
+
+      assert_response :ok
+      assert_equal "user_42", event&.owner_token
+      assert intent.reload.completed?
+    end
+  end
+
+  def test_without_the_dedup_column_a_repeat_restore_fires_again
+    without_dedup_column do
+      intent = create_intent(customer_id: "user_42")
+      stub_transaction("jws", intent: intent)
+
+      events = []
+      RubyNative.on_subscription_change { |event| events << event }
+
+      2.times { restore(customer_id: "user_42") }
+
+      assert_response :ok
+      assert_equal 2, events.size,
+        "Without the column there is nowhere to record the transaction, so this " \
+        "matches how restore behaved before it existed"
+    end
+  end
+
   def test_tolerates_an_unrecognized_environment
     intent = create_intent(customer_id: "user_42")
     stub_transaction("jws", intent: intent, environment: "Martian")
@@ -147,6 +181,17 @@ class RubyNative::IAP::RestoresControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  # Stands in for an app that has this gem version but has not run the migration.
+  def without_dedup_column
+    connection = ActiveRecord::Base.connection
+    connection.remove_column :ruby_native_purchase_intents, :restored_transaction_id
+    RubyNative::IAP::PurchaseIntent.reset_column_information
+    yield
+  ensure
+    connection.add_column :ruby_native_purchase_intents, :restored_transaction_id, :string
+    RubyNative::IAP::PurchaseIntent.reset_column_information
+  end
 
   def create_intent(customer_id:)
     RubyNative::IAP::PurchaseIntent.create!(

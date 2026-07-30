@@ -17,6 +17,14 @@ module RubyNative
       # Re-running this generator on an app that already has the first migration
       # reports it identical and creates only what is missing, so it doubles as
       # the upgrade path.
+      #
+      # That rests on `create_ruby_native_purchase_intents.rb` never changing.
+      # Rails compares the template against the copy the app already has, and
+      # only calls it identical when they match byte for byte; edit one character
+      # and it reports a conflict instead, which raises and aborts the run before
+      # the migrations added after it are copied. So an app upgrading would get
+      # none of them. Add a new template alongside it rather than editing it --
+      # `iap_generator_test.rb` fails if that file is touched.
       def copy_migrations
         migration_template "create_ruby_native_purchase_intents.rb",
           "db/migrate/create_ruby_native_purchase_intents.rb"
