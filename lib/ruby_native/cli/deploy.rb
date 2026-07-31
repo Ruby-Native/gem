@@ -79,17 +79,22 @@ module RubyNative
       end
 
       def fetch_latest_build(app_id)
-        uri = URI("#{HOST}/api/v1/apps/#{app_id}/builds/latest")
+        # Platform-scoped, or --android --if-needed compares against the
+        # latest iOS build and skips a build Android never got.
+        uri = URI("#{HOST}/api/v1/apps/#{app_id}/builds/latest?platform=#{@platform}")
         req = Net::HTTP::Get.new(uri)
         req["Authorization"] = "Token #{Credentials.token}"
 
         response = make_request(uri, req)
 
         case response
-        when Net::HTTPSuccess
-          JSON.parse(response.body)
+        # Before HTTPSuccess, its superclass: a 204 has no body to parse, and
+        # matching Success first crashed --if-needed before an app's first
+        # successful build.
         when Net::HTTPNoContent
           nil
+        when Net::HTTPSuccess
+          JSON.parse(response.body)
         when Net::HTTPUnauthorized
           raise TokenExpiredError
         else

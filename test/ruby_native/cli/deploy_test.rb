@@ -32,6 +32,17 @@ class DeployTest < Minitest::Test
     refute deploy.send(:skip_build?, "app_123")
   end
 
+  def test_latest_build_request_is_platform_scoped
+    deploy = RubyNative::CLI::Deploy.new(["--android"])
+    captured = nil
+    deploy.define_singleton_method(:make_request) do |uri, _req|
+      captured = uri
+      Net::HTTPNoContent.new("1.1", "204", "No Content")
+    end
+    deploy.send(:fetch_latest_build, "app_123")
+    assert_includes captured.to_s, "platform=android"
+  end
+
   private
 
   def build_deploy(latest_build: {}, gem_version: nil)
