@@ -87,6 +87,18 @@ export function NativePush() {
 }
 
 /**
+ * Who is signed in, as an opaque server-computed token (`native_identity_token`
+ * shared as an Inertia prop). Render on every page: an empty or missing token
+ * means signed out, and the app clears its screens when the value changes.
+ * @param {object} props
+ * @param {string | null} [props.token]
+ * @returns {import("react").ReactElement}
+ */
+export function NativeIdentity({ token }) {
+  return createElement("div", { "data-native-identity": token ?? "", hidden: true })
+}
+
+/**
  * @returns {import("react").ReactElement}
  */
 export function NativeForm() {

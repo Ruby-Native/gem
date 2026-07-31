@@ -40,6 +40,7 @@ module RubyNative
         say "       <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">"
         say "  4. Add to your layout <body>:"
         say "       <%= native_tabs_tag %>"
+        say "       <%= native_identity_tag(current_user&.id) %>"
         say "  5. Preview on your device:"
         say "       bundle exec ruby_native preview"
         say ""

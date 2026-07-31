@@ -26,6 +26,18 @@ module RubyNative
       tag.div(data: { native_push: true }, hidden: true)
     end
 
+    def native_identity_tag(value)
+      tag.div(data: { native_identity: native_identity_token(value) }, hidden: true)
+    end
+
+    # HMAC, not a bare digest: a digest of a small integer id space is enumerable,
+    # so the DOM would effectively still carry the id it was meant to hide.
+    def native_identity_token(value)
+      parts = Array(value).compact
+      return "" if parts.empty?
+      OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, parts.join(":"))[0, 16]
+    end
+
     def native_back_button_tag(text = nil, **options)
       options[:class] = [options[:class], "native-back-button"].compact.join(" ")
       default_content = tag.svg(

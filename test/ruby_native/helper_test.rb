@@ -14,6 +14,35 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_equal "", html
   end
 
+  def test_native_identity_tag_signed_in
+    html = native_identity_tag(42)
+    assert_match(/data-native-identity="\h{16}"/, html)
+    assert_includes html, 'hidden'
+  end
+
+  def test_native_identity_tag_signed_out
+    html = native_identity_tag(nil)
+    assert_includes html, 'data-native-identity=""'
+  end
+
+  def test_native_identity_token_is_stable
+    assert_equal native_identity_token(42), native_identity_token(42)
+  end
+
+  def test_native_identity_token_differs_by_value
+    refute_equal native_identity_token(42), native_identity_token(77)
+  end
+
+  def test_native_identity_token_array_defines_the_boundary
+    refute_equal native_identity_token([1, 2]), native_identity_token(1)
+    assert_equal native_identity_token([1, nil]), native_identity_token(1)
+    assert_equal "", native_identity_token([nil])
+  end
+
+  def test_native_identity_token_is_keyed_not_a_bare_digest
+    refute_equal OpenSSL::Digest::SHA256.hexdigest("42")[0, 16], native_identity_token(42)
+  end
+
   def test_native_form_tag
     html = native_form_tag
     assert_includes html, 'data-native-form'
