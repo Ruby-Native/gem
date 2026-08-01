@@ -8,21 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Signing out or switching accounts now resets the app, clearing every tab.** Add `<%= native_identity_tag current_user&.id %>` to your layout on every page; signing in never resets. [Docs](https://rubynative.com/docs/authentication), including the Inertia setup.
-
-- **Links to another tab's path now switch tabs on Android in Normal Mode**, matching iOS for Turbo, Inertia, and plain links. The back button follows your app's navigation history now too, skipping form pages.
-
-- **Advanced Mode on Android keeps the page when it hides the tab bar** instead of resetting every tab. The iOS half shipped in 0.11.2.
-
+- **Signing out or switching accounts now resets the app, clearing every tab.** Add `<%= native_identity_tag current_user&.id %>` to your layout; signing in never resets. [Docs](https://rubynative.com/docs/authentication), including the Inertia setup.
+- **Links to another tab's path now switch tabs on Android in Normal Mode**, matching iOS for Turbo, Inertia, and plain links.
+- **The Android back button now follows your app's navigation history in Normal Mode**, skipping form pages.
+- **Hiding the tab bar no longer loses the page in Advanced Mode on Android.** The iOS half shipped in 0.11.2.
 - **Builds and screenshot captures now use the native code that matches your gem version.** Patch fixes still arrive automatically; a new native minor arrives when you update the gem.
 
 ### Security
 
-- **`ruby_native login` no longer sends its pairing secret through the browser.** The code that collected the CLI token travelled in the authorize URL, so anyone who got you to open their link received a working token for your account. The CLI now keeps a secret of its own and sends only a hash of it, which is useless to whoever sent the link. **Requires the matching server change, already live:** an older CLI cannot complete a sign-in, and the browser now says so and names the fix. Run `bundle update ruby_native` and `ruby_native login` again.
-
-- **Restoring a purchase now grants the subscription to the account that bought it.** The account came from the request rather than from the purchase, so one paid subscription could be restored onto any number of other accounts. The account is now read from the purchase the transaction was actually made against. Updating the gem is all this needs. There is also an optional migration, in the upgrade guide below, that stops a repeated restore from firing your subscription callback more than once.
-
-- **A crafted native sign-in link can no longer send someone's session to another app.** The OAuth flow hands the finished session back to the app through the custom URL scheme it registered, and that scheme arrived as a plain query parameter, so a link that named a different destination was honored. The server now accepts only the `rubynative-` scheme shape the apps actually register and treats anything else as a web sign-in, which completes in the browser and hands back nothing. Only apps using `auth.oauth_paths` were affected.
+- **A crafted `ruby_native login` link can no longer hand your CLI token to whoever sent it.** Update the gem and run `ruby_native login` again; an older CLI can no longer complete a sign-in, and the browser says so.
+- **Restoring a purchase now grants the subscription to the account that bought it.** One paid subscription could previously be restored onto any number of other accounts.
+- **A crafted native sign-in link can no longer send someone's session to another app.** Only apps using `auth.oauth_paths` were affected.
 
 ### Fixed
 
@@ -34,8 +30,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Upgrade guide
 
 1. `bundle update ruby_native`. On its own this closes both sign-in holes above and fixes which account a restore credits.
-2. Run `ruby_native login` again. The old sign-in exchange is gone, so an existing CLI session keeps working but a new one has to be made by this version.
-3. **Using in-app purchases?** Run `bin/rails generate ruby_native:iap` and then `bin/rails db:migrate`. This adds one column that lets the server tell a repeated restore from a renewal, so your `on_subscription_change` callback fires once per purchase instead of once per restore. Skipping it is safe: restores keep working and credit the right account, they just keep firing the callback the way they always have. Re-running the generator leaves the migration you already have alone.
+2. Run `ruby_native login` again. An existing CLI session keeps working, but new sign-ins need this version.
+3. **Using in-app purchases?** Run `bin/rails generate ruby_native:iap` and then `bin/rails db:migrate`. Your `on_subscription_change` callback then fires once per purchase instead of once per restore. Skipping it is safe, and so is re-running the generator.
 4. **Recommended: adopt the identity tag.** Add `<%= native_identity_tag current_user&.id %>` to your layout, outside any signed-in check, and rebuild. Skipping it is safe. Inertia apps: follow [the sign out docs](https://rubynative.com/docs/authentication).
 
 ## [0.11.2] - 2026-07-27
