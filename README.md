@@ -1,6 +1,6 @@
 # ruby_native
 
-[Ruby Native](https://rubynative.com) turns a Rails app into an iOS app, with Android in public beta. This gem is the Rails-side integration: view helpers, a YAML config file, endpoints auto-mounted at `/native`, and a CLI for previewing and deploying builds. Full docs, including the complete helper reference and config schema, live at [rubynative.com/docs](https://rubynative.com/docs).
+[Ruby Native](https://rubynative.com) turns a Rails app into iOS and Android apps. This gem is the Rails-side integration: view helpers, a YAML config file, endpoints auto-mounted at `/native`, and a CLI for previewing and deploying builds. Full docs, including the complete helper reference and config schema, live at [rubynative.com/docs](https://rubynative.com/docs).
 
 ## Installation
 
