@@ -307,8 +307,9 @@ module RubyNative
       # web side) so it works even where embedded web views don't support
       # `navigator.share`. Icons follow the same rules as the other navbar
       # buttons: `icon:` applies to every platform and `icons:` ({ ios:,
-      # android: }) overrides per platform.
-      def share_button(url: nil, title: "Share", icon: "square.and.arrow.up", icons: nil, position: :trailing)
+      # android: }) overrides per platform. Android defaults to the Material
+      # `share` glyph; the SF Symbol default renders as missing there.
+      def share_button(url: nil, title: "Share", icon: "square.and.arrow.up", icons: { android: "share" }, position: :trailing)
         resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_button: "", native_share: "" }
         data[:native_title] = title if title
@@ -364,7 +365,7 @@ module RubyNative
       # opens the platform share sheet for `url:` (defaults to the current
       # page on the web side). Icons follow the same `icon:`/`icons:` rules
       # as the other menu items.
-      def share_item(title = "Share", url: nil, icon: "square.and.arrow.up", icons: nil, selected: false)
+      def share_item(title = "Share", url: nil, icon: "square.and.arrow.up", icons: { android: "share" }, selected: false)
         resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_menu_item: "", native_title: title, native_share: "" }
         data[:native_share_url] = url if url

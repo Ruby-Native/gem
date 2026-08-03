@@ -444,6 +444,28 @@ class RubyNative::HelperTest < ActionView::TestCase
     refute_includes html, "data-native-share-url"
   end
 
+  def test_native_navbar_tag_share_button_defaults_to_material_share_on_android
+    define_singleton_method(:native_platform) { "android" }
+
+    html = native_navbar_tag("Article") do |navbar|
+      navbar.share_button
+    end
+
+    assert_includes html, 'data-native-icon="share"'
+  end
+
+  def test_native_navbar_tag_share_item_defaults_to_material_share_on_android
+    define_singleton_method(:native_platform) { "android" }
+
+    html = native_navbar_tag("Article") do |navbar|
+      navbar.button icon: "ellipsis.circle" do |button|
+        button.share_item
+      end
+    end
+
+    assert_includes html, 'data-native-icon="share"'
+  end
+
   def test_native_navbar_tag_share_button_with_url_and_icon
     html = native_navbar_tag("Article") do |navbar|
       navbar.share_button url: "https://example.com/articles/1", icon: "square.and.arrow.up.circle", title: "Send"
