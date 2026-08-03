@@ -48,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The Android splash screen no longer hangs on a first page that fails to load.** It gives way after ten seconds, matching iOS.
 - **Fast navigation can no longer mark the wrong page as a form page**, which quietly made the back button skip it for the rest of the session. The same fix keeps `native_presentation_tag :root` from clearing history it shouldn't in Inertia apps. Both platforms, Normal Mode.
 - **Saving a form no longer leaves a back button pointing at the submitted form.** Landing on a page whose only history is the form behind it now shows no back affordance, and on Android the back press no longer silently does nothing after a navbar-button submit. Both platforms, Normal Mode.
+- **Purchase buttons no longer risk claiming in-app purchases are unavailable in a build that has them.** A script-timing race let the no-IAP fallback claim the button first; it now always yields to the real purchase flow. iOS only.
 - **Turbo's cached page previews no longer report stale signals.** Badge counts and navbar state now always come from the fresh page. Both platforms.
 - **Share buttons and share menu items now show the Material share glyph on Android by default.** Without `icons:` they rendered the missing-icon placeholder, since the default is an SF Symbol name.
 - **Tapping a link while a page is still loading no longer shows an error screen.** Normal Mode, iOS only.
