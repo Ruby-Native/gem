@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Breaking
 
 - **A leading navbar button now yields its slot to the back button.** One rule on every platform and mode: the button shows on screens with nothing to go back to, like a tab's root. If you rely on a leading button staying visible on pushed screens (previously iOS Normal Mode only), move it to `position: :trailing`. Before, iOS Normal Mode showed both, iOS Advanced Mode lost its back button behind the leading button, and Android dropped the button outside a tab root.
+- **Android apps are now portrait-only by default, matching iOS.** Android previously ignored `appearance.landscape` and always rotated. If your app should rotate, set `landscape: true` and rebuild; rotation then resizes in place instead of restarting the screen.
 
 ### Added
 
@@ -25,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Leading navbar buttons now render in Advanced Mode on Android**, which previously never showed them.
 - **Tabs marked `eager: true` now preload on Android**, matching iOS.
 - **Android apps now cold-start offline** using the last known configuration, matching iOS.
-- **`appearance.landscape` now unlocks rotation on Android**, matching iOS.
 - **CSS keyed on `body.can-go-back` now activates on Android** in Normal Mode.
 - **The Android error screen now names a gem/app version mismatch** with "Gem update needed" or "App update needed" and the fix, matching iOS. Demo app only.
 
