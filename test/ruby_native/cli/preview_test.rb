@@ -18,6 +18,32 @@ class PreviewTest < Minitest::Test
     end
     assert_match(/returned 404/, out)
     assert_match(/installed and mounted/, out)
+    assert_match(%r{https://rubynative\.com/docs/setup}, out)
+  end
+
+  # A correctly mounted gem returns 500 for plenty of ordinary reasons, so
+  # blaming the mount sends people to re-verify one that was already fine.
+  def test_exits_when_config_endpoint_returns_500
+    stub_http_response(Net::HTTPInternalServerError.new("1.1", "500", "Internal Server Error"))
+    out, _err = capture_io do
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
+    end
+    assert_match(/returned 500/, out)
+    assert_match(/Your Rails app returned an error/, out)
+    assert_match(/bin\/rails db:migrate/, out)
+    refute_match(/installed and mounted/, out)
+  end
+
+  def test_exits_and_names_the_destination_when_config_endpoint_redirects
+    response = Net::HTTPFound.new("1.1", "302", "Found")
+    response["location"] = "https://example.test/sign_in"
+    stub_http_response(response)
+    out, _err = capture_io do
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
+    end
+    assert_match(%r{redirected the request to https://example\.test/sign_in}, out)
+    refute_match(/installed and mounted/, out)
+    refute_match(/db:migrate/, out)
   end
 
   def test_exits_when_server_not_running

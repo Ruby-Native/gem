@@ -34,8 +34,22 @@ module RubyNative
 
         puts "Rails server is reachable at #{@upstream}, but #{CONFIG_PATH} returned #{response.code}."
         puts ""
-        puts "Make sure the ruby_native gem is installed and mounted:"
-        puts "  https://rubynative.com/docs/install"
+
+        # 404 is what an unmounted engine returns; any other code means the app
+        # answered, so the mount is not the thing to go re-verify.
+        case response
+        when Net::HTTPNotFound
+          puts "Make sure the ruby_native gem is installed and mounted:"
+          puts "  https://rubynative.com/docs/setup"
+        when Net::HTTPRedirection
+          puts "Something redirected the request to #{response["location"]}."
+          puts "Look for a force_ssl setting or a before_action that catches this path."
+        else
+          puts "Your Rails app returned an error. Open #{@upstream} in a browser and fix"
+          puts "what it reports, then try again. Pending migrations are a common cause:"
+          puts ""
+          puts "  bin/rails db:migrate"
+        end
         exit 1
       rescue Errno::ECONNREFUSED
         if @url
