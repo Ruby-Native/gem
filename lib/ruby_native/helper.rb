@@ -221,6 +221,48 @@ module RubyNative
       tag.div(data: { native_review: true }, hidden: true)
     end
 
+    TOAST_APPEARANCES = %w[inverted system].freeze
+
+    # Shows a transient native toast above all app chrome, including the nav
+    # bar. The signal is consumed the moment it fires, so a cached page
+    # restored by back navigation cannot re-toast. Renders nothing visible on
+    # the web; keep your web-styled flash for browsers.
+    #
+    #   <%= native_toast_tag flash[:notice] %>
+    #
+    # A blank message renders nothing, so the flash one-liner needs no guard.
+    # Icons follow the same `icon:`/`icons:` rules as the navbar; the default
+    # is a per-platform checkmark and `icon: false` hides it. `appearance:` is
+    # :inverted (flips the theme so the toast always pops) or :system (matches
+    # it).
+    def native_toast_tag(message, icon: nil, icons: nil, duration: 4, appearance: :inverted)
+      return "".html_safe if message.blank?
+
+      appearance = appearance.to_s
+      unless TOAST_APPEARANCES.include?(appearance)
+        raise ArgumentError,
+          "appearance must be #{TOAST_APPEARANCES.map { |a| ":#{a}" }.join(" or ")}, " \
+          "got #{appearance.inspect}"
+      end
+
+      # An absent icon attribute means "use the default" to the shell (the JS
+      # API omits it), so `icon: false` emits an empty value to mean "none".
+      platform = try(:native_platform)
+      resolved = if icon == false
+        ""
+      else
+        RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: platform) ||
+          (platform == "android" ? "check_circle" : "checkmark.circle.fill")
+      end
+
+      data = { native_toast: "", native_toast_message: message }
+      data[:native_toast_icon] = resolved
+      data[:native_toast_duration] = duration
+      data[:native_toast_appearance] = appearance
+
+      tag.div(data: data, hidden: true)
+    end
+
     # Picks the right icon name for the current native platform. Accepts the
     # single `icon:` form (applied to every platform) and/or the `icons:` hash
     # form (`{ ios: "...", android: "..." }`). When both are given, a matching

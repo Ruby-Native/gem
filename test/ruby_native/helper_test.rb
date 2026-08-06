@@ -734,6 +734,68 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'hidden'
   end
 
+  def test_native_toast_tag_defaults
+    html = native_toast_tag("Saved.")
+    assert_includes html, 'data-native-toast'
+    assert_includes html, 'data-native-toast-message="Saved."'
+    assert_includes html, 'data-native-toast-icon="checkmark.circle.fill"'
+    assert_includes html, 'data-native-toast-duration="4"'
+    assert_includes html, 'data-native-toast-appearance="inverted"'
+    assert_includes html, 'hidden'
+  end
+
+  def test_native_toast_tag_blank_message_renders_nothing
+    assert_equal "", native_toast_tag(nil)
+    assert_equal "", native_toast_tag("")
+  end
+
+  def test_native_toast_tag_default_icon_on_android
+    define_singleton_method(:native_platform) { "android" }
+
+    html = native_toast_tag("Saved.")
+    assert_includes html, 'data-native-toast-icon="check_circle"'
+  end
+
+  def test_native_toast_tag_default_icon_on_ios
+    define_singleton_method(:native_platform) { "ios" }
+
+    html = native_toast_tag("Saved.")
+    assert_includes html, 'data-native-toast-icon="checkmark.circle.fill"'
+  end
+
+  def test_native_toast_tag_resolves_icons_per_platform
+    define_singleton_method(:native_platform) { "android" }
+
+    html = native_toast_tag("Muted.", icons: { ios: "bell.slash.fill", android: "notifications_off" })
+    assert_includes html, 'data-native-toast-icon="notifications_off"'
+  end
+
+  def test_native_toast_tag_with_flat_icon
+    html = native_toast_tag("Muted.", icon: "bell.slash.fill")
+    assert_includes html, 'data-native-toast-icon="bell.slash.fill"'
+  end
+
+  def test_native_toast_tag_icon_false_emits_explicit_none
+    html = native_toast_tag("Saved.", icon: false)
+    assert_includes html, 'data-native-toast-icon=""'
+    refute_includes html, 'checkmark'
+  end
+
+  def test_native_toast_tag_with_duration
+    html = native_toast_tag("Saved.", duration: 6)
+    assert_includes html, 'data-native-toast-duration="6"'
+  end
+
+  def test_native_toast_tag_with_system_appearance
+    html = native_toast_tag("Saved.", appearance: :system)
+    assert_includes html, 'data-native-toast-appearance="system"'
+  end
+
+  def test_native_toast_tag_rejects_unknown_appearance
+    error = assert_raises(ArgumentError) { native_toast_tag("Saved.", appearance: :neon) }
+    assert_includes error.message, ":inverted or :system"
+  end
+
   private
 
   def request

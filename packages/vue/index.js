@@ -129,6 +129,43 @@ export const NativeReview = defineComponent({
   }
 })
 
+/**
+ * A transient native toast shown above all app chrome. The signal is consumed
+ * the moment it fires, so a restored page cannot re-toast. Renders nothing
+ * visible on the web. `icon: false` hides the default checkmark. The
+ * counterpart of the `native_toast_tag` Rails helper.
+ */
+export const NativeToast = defineComponent({
+  name: "NativeToast",
+  props: {
+    message: { type: String, default: "" },
+    icon: { type: [String, Boolean], default: undefined },
+    icons: /** @type {import("vue").PropType<NativeIcons>} */ (Object),
+    duration: { type: Number, default: 4 },
+    appearance: { type: /** @type {import("vue").PropType<"inverted" | "system">} */ (String), default: "inverted" }
+  },
+  render() {
+    if (!this.message) return null
+    /** @type {Record<string, any>} */
+    const attrs = {
+      "data-native-toast": "",
+      "data-native-toast-message": this.message,
+      "data-native-toast-duration": this.duration,
+      "data-native-toast-appearance": this.appearance,
+      hidden: true
+    }
+    // An absent icon attribute means "use the default" to the shell (the JS
+    // API omits it), so `:icon="false"` emits an empty value to mean "none".
+    if (this.icon === false) {
+      attrs["data-native-toast-icon"] = ""
+    } else {
+      const fallback = rubyNativePlatform() === "android" ? "check_circle" : "checkmark.circle.fill"
+      attrs["data-native-toast-icon"] = resolveIcon(typeof this.icon === "string" ? this.icon : undefined, this.icons) || fallback
+    }
+    return h("div", attrs)
+  }
+})
+
 export const NativeNavbar = defineComponent({
   name: "NativeNavbar",
   props: {

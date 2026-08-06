@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Added
+
+- **Native toasts.** `<%= native_toast_tag flash[:notice] %>` in your layout floats confirmations over all app chrome, including the nav bar, and navigating back never repeats one. Both platforms, both modes. [Docs](https://rubynative.com/docs/toasts), including the Inertia components.
+- **`RubyNative.toast("Saved.")` shows a toast from client-side JavaScript**, no server round trip. A browser ignores the call, so it is safe to run unconditionally.
+
 ### Fixed
 
 - **`ruby_native preview` now names the real reason your app did not serve its config.** Every failure used to blame an unmounted gem and link a docs page that does not exist, so a 500 from a pending migration sent you to re-check a mount that was already fine. A 500 now points at your app, and a redirect names where the request went.

@@ -130,6 +130,39 @@ export function NativeReview() {
 }
 
 /**
+ * A transient native toast shown above all app chrome. The signal is consumed
+ * the moment it fires, so a restored page cannot re-toast. Renders nothing
+ * visible on the web. The counterpart of the `native_toast_tag` Rails helper.
+ * @param {object} props
+ * @param {string} [props.message] Nothing renders when blank.
+ * @param {string | false} [props.icon] `false` hides the default checkmark.
+ * @param {NativeIcons} [props.icons]
+ * @param {number} [props.duration]
+ * @param {"inverted" | "system"} [props.appearance]
+ * @returns {import("react").ReactElement | null}
+ */
+export function NativeToast({ message, icon, icons, duration = 4, appearance = "inverted" }) {
+  if (!message) return null
+  /** @type {Record<string, any>} */
+  const props = {
+    "data-native-toast": "",
+    "data-native-toast-message": message,
+    "data-native-toast-duration": duration,
+    "data-native-toast-appearance": appearance,
+    hidden: true
+  }
+  // An absent icon attribute means "use the default" to the shell (the JS API
+  // omits it), so `icon={false}` emits an empty value to mean "none".
+  if (icon === false) {
+    props["data-native-toast-icon"] = ""
+  } else {
+    const fallback = rubyNativePlatform() === "android" ? "check_circle" : "checkmark.circle.fill"
+    props["data-native-toast-icon"] = resolveIcon(icon, icons) || fallback
+  }
+  return createElement("div", props)
+}
+
+/**
  * @param {object} props
  * @param {string} [props.title]
  * @param {boolean} [props.pullToRefresh]
