@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **`ruby_native preview` now takes its port from `PORT` when that is set.** `rails server` picks its port from `PORT`, and so does the `config/puma.rb` that ships with Rails, so an app on anything but 3000 meant passing `--port` on every preview to repeat a number the server already had. The precedence is the one `rails server` uses: `--port` wins, then `PORT`, then 3000. A `PORT` that is not a usable port number falls back to 3000, and every message that names the port says when it came from the environment.
+
 ## [0.12.1] - 2026-08-06
 
 ### Added

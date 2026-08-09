@@ -72,6 +72,8 @@ This starts a Cloudflare tunnel and shows a QR code for the Ruby Native app to s
 brew install cloudflare/cloudflare/cloudflared
 ```
 
+The tunnel points at port 3000, or at `PORT` when it is set, the same way `rails server` picks its port. Pass `--port 4000` to override, or `--url` for an upstream that isn't on localhost.
+
 See [rubynative.com/docs/cli](https://rubynative.com/docs/cli) for `deploy`, `login`, and auto-deploying from CI.
 
 ## React and Vue
