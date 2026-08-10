@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Native menus on any element.** `<%= native_menu_tag anchor: "#status-pill" %>` opens a native menu when that element is tapped in the app, with the same items as a navbar dropdown. Mark an item `destructive: true` to render it red, here and in navbar dropdown menus. Both platforms, both modes.
+
+### Fixed
+
+- **A modal form's redirect now renders the page it returns to.** The landing page kept its stale pre-submit content, and a flash toast on it never showed. Advanced Mode, iOS.
+- **The floating action button now carries its `rubyNative/fab` accessibility identifier**, so UI tests can address it. Advanced Mode, iOS.
+
 ## [0.12.1] - 2026-08-06
 
 ### Added
