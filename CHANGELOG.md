@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+## [0.12.3] - 2026-08-11
+
 ### Fixed
 
 - **A modal form's redirect now renders the page it returns to.** The landing page kept its stale pre-submit content, and a flash toast on it never showed. Advanced Mode, both platforms.
