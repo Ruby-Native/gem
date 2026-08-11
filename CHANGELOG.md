@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
-### Added
-
-- **Native menus on any element.** `<%= native_menu_tag anchor: "#status-pill" %>` opens a native menu when that element is tapped in the app, with the same items as a navbar dropdown. Mark an item `destructive: true` to render it red, here and in navbar dropdown menus. Both platforms, both modes.
-
 ## [0.12.2] - 2026-08-10
 
 ### Fixed
