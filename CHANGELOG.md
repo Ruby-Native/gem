@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`ruby_native preview` now takes its port from `PORT` when that is set.** `rails server` picks its port from `PORT`, and so does the `config/puma.rb` that ships with Rails, so an app on anything but 3000 meant passing `--port` on every preview to repeat a number the server already had. The precedence is the one `rails server` uses: `--port` wins, then `PORT`, then 3000. A `PORT` that is not a usable port number falls back to 3000, and every message that names the port says when it came from the environment.
 
+## [0.12.5] - 2026-08-11
+
+### Added
+
+- **Support tablets.** Turn it on in your app's dashboard settings and iOS builds target iPad as well as iPhone, which also lists the app on Apple Vision Pro. Required when you're replacing an App Store app that already supports iPad: Apple rejects any update that drops a device. It can't be turned off once an iPad build ships, so the dashboard locks it after. Android tablets are always included, no setting needed.
+
+### Fixed
+
+- **Tablets now rotate freely.** The portrait-by-default rule applies to phones only; `appearance.landscape` still controls them. Newer OS versions ignore orientation locks on large screens anyway, so locking only split behavior across older tablets. Both platforms, both modes.
+- **A rejected App Store Connect upload now shows Apple's actual reason on the build page**, instead of pointing you at your API key when the key was fine.
+
 ## [0.12.4] - 2026-08-11
 
 ### Fixed
