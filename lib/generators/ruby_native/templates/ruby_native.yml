@@ -109,6 +109,10 @@ tabs:
 # ios:
 #   bundle_id: com.example.myapp
 #   team_id: ABCD123456
+# android:
+#   package: com.example.myapp
+#   # Play Console -> Setup -> App integrity -> App signing key certificate.
+#   cert_fingerprint: "AA:BB:CC:..."
 
 # Enable OAuth. Each path triggers a native ASWebAuthenticationSession
 # on iOS instead of an in-app web view. List only the authorize path for each
