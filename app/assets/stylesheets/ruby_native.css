@@ -20,6 +20,29 @@
   height: var(--ruby-native-safe-area-inset-bottom, env(safe-area-inset-bottom));
 }
 
+/* In-app defaults so pages feel native without any setup: no gray tap flash,
+   no selecting button labels on long-press, no double-tap zoom on controls.
+   Pair with :active styles for pressed feedback; the bridge makes them apply
+   instantly on touch. */
+[data-native-app] * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-native-app] button,
+[data-native-app] [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+[data-native-app] a,
+[data-native-app] button,
+[data-native-app] input,
+[data-native-app] label,
+[data-native-app] [role="button"] {
+  touch-action: manipulation;
+}
+
 .native-back-button {
   display: none;
 }

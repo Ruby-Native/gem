@@ -9,7 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **`ruby_native preview` now takes its port from `PORT` when that is set.** `rails server` picks its port from `PORT`, and so does the `config/puma.rb` that ships with Rails, so an app on anything but 3000 meant passing `--port` on every preview to repeat a number the server already had. The precedence is the one `rails server` uses: `--port` wins, then `PORT`, then 3000. A `PORT` that is not a usable port number falls back to 3000, and every message that names the port says when it came from the environment.
+- **Taps feel native out of the box.** In the app, the web view's gray tap flash is gone, long-pressing a button no longer selects its label, and double-tap zoom is off on links, buttons, and form controls. Pressed states you style with `:active` now apply instantly on touch instead of after a long hold. Both platforms, both modes.
+
 - **The app's User-Agent now reports its app version, build number, and OS version**, like `Ruby Native iOS/5.2/35 iOS/26.5.2 RubyNative/0.12.5` (same shape on Android). New view helpers parse it: `native_app_version`, `native_app_build`, and `native_os_version`, each returning `nil` on the web and on app builds from before this release. Both platforms, both modes.
+- **`RubyNative.toast()` accepts per-platform icons**, like the helper always has: `RubyNative.toast({ message: "Shared.", icons: { ios: "square.and.arrow.up", android: "share" } })`. Both platforms, both modes.
 
 ### Fixed
 
