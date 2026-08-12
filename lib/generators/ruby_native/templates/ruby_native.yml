@@ -114,6 +114,12 @@ tabs:
 #   # Play Console -> Setup -> App integrity -> App signing key certificate.
 #   cert_fingerprint: "AA:BB:CC:..."
 
+# Link only these path prefixes instead of the whole domain. Links outside
+# them keep opening in the browser. Applies to iOS on your next deploy and
+# to Android on your next build.
+# linked_paths:
+#   - /pair/
+
 # Enable OAuth. Each path triggers a native ASWebAuthenticationSession
 # on iOS instead of an in-app web view. List only the authorize path for each
 # provider, not its callback; the callback is handled automatically.

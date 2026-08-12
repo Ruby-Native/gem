@@ -12,7 +12,7 @@ module RubyNative
       render json: {
         applinks: {
           details: [
-            { appIDs: [ app_id ], components: oauth_exclusions + [ { "/": "*" } ] }
+            { appIDs: [ app_id ], components: oauth_exclusions + linked_components }
           ]
         },
         webcredentials: {
@@ -36,6 +36,16 @@ module RubyNative
       Array(RubyNative.config&.dig(:auth, :oauth_paths)).map do |path|
         { "/": "#{path}*", exclude: true }
       end
+    end
+
+    # `linked_paths` scopes Universal Links to those prefixes; without it every
+    # URL on the domain is linked. Password sharing (webcredentials) stays
+    # domain-wide either way; there is no path concept for it.
+    def linked_components
+      paths = Array(RubyNative.config&.dig(:linked_paths))
+      return [ { "/": "*" } ] if paths.empty?
+
+      paths.map { |path| { "/": "#{path}*" } }
     end
   end
 end

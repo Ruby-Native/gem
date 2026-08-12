@@ -49,6 +49,7 @@ module RubyNative
     self.config[:app][:entry_path] ||= self.config.dig(:tabs, 0, :path) || "/"
     self.config[:auth] ||= {}
     normalize_oauth_paths
+    normalize_linked_paths
     backfill_tab_icons
     backfill_error_icons
   end
@@ -182,5 +183,18 @@ module RubyNative
       "(#{callbacks.join(", ")}). List only the authorize path; callbacks are handled automatically."
     )
     self.config[:auth][:oauth_paths] = paths - callbacks
+  end
+
+  # Entries are path prefixes: "/pair/" links every URL under it. A leading
+  # slash is added when missing, and a trailing "*" (an easy slip, since the
+  # AASA file uses one) is stripped so both platforms receive a plain prefix.
+  # Left absent when unconfigured so config.json doesn't grow an empty key.
+  def self.normalize_linked_paths
+    return unless self.config.key?(:linked_paths)
+
+    self.config[:linked_paths] = Array(self.config[:linked_paths])
+      .map { |path| path.to_s.strip.sub(/\*+\z/, "") }
+      .reject(&:empty?)
+      .map { |path| path.start_with?("/") ? path : "/#{path}" }
   end
 end

@@ -46,6 +46,20 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  def test_linked_paths_are_normalized_to_plain_prefixes
+    with_config(app: {}, tabs: [], linked_paths: [ "/pair/*", "invites/", " ", nil ]) do
+      RubyNative.load_config
+      assert_equal [ "/pair/", "/invites/" ], RubyNative.config[:linked_paths]
+    end
+  end
+
+  def test_linked_paths_stay_absent_when_unconfigured
+    with_config(app: {}, tabs: []) do
+      RubyNative.load_config
+      refute RubyNative.config.key?(:linked_paths)
+    end
+  end
+
   def test_tab_icon_kept_when_explicitly_set
     with_config(app: {}, tabs: [{title: "Home", path: "/", icon: "house", icons: {ios: "house.fill", android: "home"}}]) do
       RubyNative.load_config

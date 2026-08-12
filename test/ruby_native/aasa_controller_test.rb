@@ -65,6 +65,27 @@ class RubyNative::AasaControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ { "/" => "*" } ], components
   end
 
+  def test_linked_paths_replace_the_catch_all
+    RubyNative.config = RubyNative.config.deep_merge(linked_paths: [ "/pair/", "/invites/" ])
+
+    get PATH
+
+    components = JSON.parse(response.body).dig("applinks", "details", 0, "components")
+    assert_equal [
+      { "/" => "/auth/test_provider*", "exclude" => true },
+      { "/" => "/pair/*" },
+      { "/" => "/invites/*" }
+    ], components
+  end
+
+  def test_linked_paths_do_not_touch_webcredentials
+    RubyNative.config = RubyNative.config.deep_merge(linked_paths: [ "/pair/" ])
+
+    get PATH
+
+    assert_equal [ "ABCD123456.com.example.test" ], JSON.parse(response.body).dig("webcredentials", "apps")
+  end
+
   def test_returns_404_when_ios_section_is_missing
     RubyNative.config = (@original_config || {}).except(:ios)
 
