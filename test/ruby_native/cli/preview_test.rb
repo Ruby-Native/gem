@@ -42,6 +42,31 @@ class PreviewTest < Minitest::Test
     end
   end
 
+  # An inherited port answering 404 is likely some other local service, not an
+  # unmounted gem, so the message has to say where the port came from.
+  def test_the_wrong_service_message_names_the_environment_as_the_source_too
+    with_port("3001") do
+      preview = RubyNative::CLI::Preview.new([])
+      preview.define_singleton_method(:fetch_config_response) { |_uri| Net::HTTPNotFound.new("1.1", "404", "Not Found") }
+      out, _err = capture_io do
+        assert_raises(SystemExit) { preview.send(:check_upstream!) }
+      end
+      assert_match(%r{reachable at http://localhost:3001 \(port from PORT\)}, out)
+    end
+  end
+
+  def test_the_wrong_service_message_does_not_blame_the_environment_for_a_flag_port
+    with_port("3001") do
+      preview = RubyNative::CLI::Preview.new(["--port", "4000"])
+      preview.define_singleton_method(:fetch_config_response) { |_uri| Net::HTTPNotFound.new("1.1", "404", "Not Found") }
+      out, _err = capture_io do
+        assert_raises(SystemExit) { preview.send(:check_upstream!) }
+      end
+      assert_match(%r{reachable at http://localhost:4000, but}, out)
+      refute_match(/from PORT/, out)
+    end
+  end
+
   # The QR screen is the last thing printed, seconds after the same port was
   # named with its source, so it has to agree.
   def test_the_qr_reminder_names_the_environment_as_the_source_too

@@ -34,7 +34,7 @@ module RubyNative
 
         return if response.is_a?(Net::HTTPSuccess)
 
-        puts "Rails server is reachable at #{@upstream}, but #{CONFIG_PATH} returned #{response.code}."
+        puts "Rails server is reachable at #{upstream_description}, but #{CONFIG_PATH} returned #{response.code}."
         puts ""
 
         # 404 is what an unmounted engine returns; any other code means the app
@@ -146,6 +146,13 @@ module RubyNative
       # Naming the source keeps a port nobody typed from reading as a bug.
       def port_description
         @port_from_env ? "#{@port} (from PORT)" : @port.to_s
+      end
+
+      # @port_from_env can be true alongside --url, which ignores the port.
+      def upstream_description
+        return @upstream if @url || !@port_from_env
+
+        "#{@upstream} (port from PORT)"
       end
 
       def parse_option(argv, flag)
