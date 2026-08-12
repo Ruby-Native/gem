@@ -93,4 +93,73 @@ class RubyNative::NativeDetectionTest < Minitest::Test
     controller = FakeController.new(FakeRequest.new(nil))
     assert_nil controller.native_platform
   end
+
+  FULL_IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) " \
+    "Ruby Native iOS/5.2/35 iOS/26.5.2 RubyNative/0.12.6 Hotwire Native iOS; Turbo Native iOS; bridge-components: []"
+  FULL_ANDROID_UA = "Ruby Native Android/5.3/44 Android/17 RubyNative/0.12.6 " \
+    "Hotwire Native Android; Turbo Native Android; bridge-components: []; Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36"
+
+  def test_native_app_version_parses_full_ios_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_IOS_UA))
+    assert_equal "5.2", controller.native_app_version
+  end
+
+  def test_native_app_build_parses_full_ios_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_IOS_UA))
+    assert_equal "35", controller.native_app_build
+  end
+
+  def test_native_os_version_parses_full_ios_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_IOS_UA))
+    assert_equal "26.5.2", controller.native_os_version
+  end
+
+  def test_native_version_parses_full_ios_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_IOS_UA))
+    assert_equal RubyNative::NativeVersion.new("0.12.6"), controller.native_version
+  end
+
+  def test_native_app_version_parses_full_android_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_ANDROID_UA))
+    assert_equal "5.3", controller.native_app_version
+  end
+
+  def test_native_app_build_parses_full_android_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_ANDROID_UA))
+    assert_equal "44", controller.native_app_build
+  end
+
+  def test_native_os_version_parses_full_android_user_agent
+    controller = FakeController.new(FakeRequest.new(FULL_ANDROID_UA))
+    assert_equal "17", controller.native_os_version
+  end
+
+  def test_native_app_version_parses_old_format_user_agent
+    controller = FakeController.new(FakeRequest.new("Ruby Native iOS/1.4 RubyNative/0.2.0"))
+    assert_equal "1.4", controller.native_app_version
+  end
+
+  def test_native_app_build_returns_nil_for_old_format_user_agent
+    controller = FakeController.new(FakeRequest.new("Ruby Native iOS/1.4 RubyNative/0.2.0"))
+    assert_nil controller.native_app_build
+  end
+
+  def test_native_os_version_does_not_mistake_app_version_in_old_format_user_agent
+    controller = FakeController.new(FakeRequest.new("Ruby Native iOS/1.4 RubyNative/0.2.0"))
+    assert_nil controller.native_os_version
+  end
+
+  def test_new_helpers_return_nil_for_browser_user_agent
+    controller = FakeController.new(FakeRequest.new("Mozilla/5.0"))
+    assert_nil controller.native_app_version
+    assert_nil controller.native_app_build
+    assert_nil controller.native_os_version
+  end
+
+  def test_new_helpers_return_nil_for_nil_user_agent
+    controller = FakeController.new(FakeRequest.new(nil))
+    assert_nil controller.native_app_version
+    assert_nil controller.native_app_build
+    assert_nil controller.native_os_version
+  end
 end
