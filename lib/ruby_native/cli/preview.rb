@@ -11,10 +11,12 @@ module RubyNative
       TUNNEL_READY_TIMEOUT = 60
       TUNNEL_POLL_INTERVAL = 1
       PUBLIC_NAMESERVERS = ["1.1.1.1", "8.8.8.8"].freeze
+      DEFAULT_PORT = 3000
+      PORT_RANGE = (1..65_535)
 
       def initialize(argv)
         @url = parse_option(argv, "--url")
-        @port = parse_port(argv)
+        @port, @port_from_env = resolve_port(argv)
         @upstream = @url || "http://localhost:#{@port}"
       end
 
@@ -57,7 +59,7 @@ module RubyNative
           puts ""
           puts "Make sure your Rails server is reachable at that URL."
         else
-          puts "Nothing is running on port #{@port}."
+          puts "Nothing is running on port #{port_description}."
           puts ""
           puts "Start your Rails server in another terminal:"
           puts "  bin/rails server -p #{@port}"
@@ -121,9 +123,29 @@ module RubyNative
         Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
 
-      def parse_port(argv)
-        value = parse_option(argv, "--port")
-        value ? value.to_i : 3000
+      # --port, then PORT, then 3000 is the precedence rails server itself uses,
+      # so a preview lands on the port the app is already serving. Anything
+      # unusable in PORT falls back rather than failing: the variable gets set
+      # for plenty of reasons that have nothing to do with a local Rails server.
+      def resolve_port(argv)
+        flag = parse_option(argv, "--port")
+        return [flag.to_i, false] if flag
+
+        env = env_port
+        env ? [env, true] : [DEFAULT_PORT, false]
+      end
+
+      def env_port
+        value = ENV["PORT"].to_s.strip
+        return unless value.match?(/\A\d+\z/)
+
+        port = value.to_i
+        port if PORT_RANGE.cover?(port)
+      end
+
+      # Naming the source keeps a port nobody typed from reading as a bug.
+      def port_description
+        @port_from_env ? "#{@port} (from PORT)" : @port.to_s
       end
 
       def parse_option(argv, flag)
@@ -148,7 +170,7 @@ module RubyNative
         if @url
           puts "Make sure your Rails server is reachable at #{@url}."
         else
-          puts "Make sure your Rails server is running on port #{@port} in another terminal."
+          puts "Make sure your Rails server is running on port #{port_description} in another terminal."
         end
         puts ""
 
@@ -201,7 +223,7 @@ module RubyNative
         if @url
           puts "Keep this running and your Rails server reachable at #{@url}."
         else
-          puts "Keep this running and your Rails server on port #{@port} in another terminal."
+          puts "Keep this running and your Rails server on port #{port_description} in another terminal."
         end
         puts "Press Ctrl+C to stop."
       end

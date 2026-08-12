@@ -6,6 +6,54 @@ class PreviewTest < Minitest::Test
     @preview = RubyNative::CLI::Preview.new(["--port", "3000"])
   end
 
+  def test_defaults_to_port_3000
+    with_port(nil) { assert_equal "http://localhost:3000", upstream_for([]) }
+  end
+
+  def test_takes_the_port_from_the_environment
+    with_port("3001") { assert_equal "http://localhost:3001", upstream_for([]) }
+  end
+
+  def test_port_flag_wins_over_the_environment
+    with_port("3001") { assert_equal "http://localhost:4000", upstream_for(["--port", "4000"]) }
+  end
+
+  def test_url_flag_ignores_the_environment
+    with_port("3001") { assert_equal "https://app.test", upstream_for(["--url", "https://app.test"]) }
+  end
+
+  def test_unusable_environment_ports_fall_back_to_the_default
+    ["", "  ", "tcp://10.0.0.1:3001", "3001abc", "0", "99999"].each do |value|
+      with_port(value) do
+        assert_equal "http://localhost:3000", upstream_for([]), "PORT=#{value.inspect}"
+      end
+    end
+  end
+
+  def test_messages_name_the_environment_as_the_source_of_an_inherited_port
+    with_port("3001") do
+      preview = RubyNative::CLI::Preview.new([])
+      preview.define_singleton_method(:fetch_config_response) { |_uri| raise Errno::ECONNREFUSED }
+      out, _err = capture_io do
+        assert_raises(SystemExit) { preview.send(:check_upstream!) }
+      end
+      assert_match(/Nothing is running on port 3001 \(from PORT\)/, out)
+      assert_match(/bin\/rails server -p 3001/, out)
+    end
+  end
+
+  # The QR screen is the last thing printed, seconds after the same port was
+  # named with its source, so it has to agree.
+  def test_the_qr_reminder_names_the_environment_as_the_source_too
+    with_port("3001") do
+      preview = RubyNative::CLI::Preview.new([])
+      out, _err = capture_io do
+        preview.send(:display_qr, "https://example.trycloudflare.com")
+      end
+      assert_match(/your Rails server on port 3001 \(from PORT\)/, out)
+    end
+  end
+
   def test_passes_when_config_endpoint_returns_200
     stub_http_response(Net::HTTPSuccess.new("1.1", "200", "OK"))
     @preview.send(:check_upstream!)
@@ -52,6 +100,7 @@ class PreviewTest < Minitest::Test
       assert_raises(SystemExit) { @preview.send(:check_upstream!) }
     end
     assert_match(/Nothing is running on port 3000/, out)
+    refute_match(/from PORT/, out)
   end
 
   def test_exits_when_url_unreachable
@@ -189,6 +238,18 @@ class PreviewTest < Minitest::Test
   end
 
   private
+
+  def upstream_for(argv)
+    RubyNative::CLI::Preview.new(argv).instance_variable_get(:@upstream)
+  end
+
+  def with_port(value)
+    original = ENV["PORT"]
+    ENV["PORT"] = value
+    yield
+  ensure
+    ENV["PORT"] = original
+  end
 
   def stub_http_response(response)
     @preview.define_singleton_method(:fetch_config_response) { |_uri| response }
