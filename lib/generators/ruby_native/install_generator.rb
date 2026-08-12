@@ -10,14 +10,24 @@ module RubyNative
       end
 
       def add_allowed_host
-        host_line = '  config.hosts << ".trycloudflare.com"'
+        host_line = %(  config.hosts << ".trycloudflare.com" if config.hosts.is_a?(Array)\n)
         dev_config = "config/environments/development.rb"
 
         return unless File.exist?(File.join(destination_root, dev_config))
-        return if File.read(File.join(destination_root, dev_config)).include?("trycloudflare")
+        contents = File.read(File.join(destination_root, dev_config))
+        return if contents.include?("trycloudflare")
 
-        environment(host_line, env: "development")
-        say "  Added .trycloudflare.com to allowed hosts in development.rb", :green
+        # Match any configure block, not just Rails.application.configure; some
+        # apps use MyApp::Application.configure and Thor's environment helper
+        # silently skips those.
+        configure_block = /^[\w:.]+\.configure do\s*\n/
+        if contents.match?(configure_block)
+          inject_into_file dev_config, host_line, after: configure_block, verbose: false
+          say "  Added .trycloudflare.com to allowed hosts in development.rb", :green
+        else
+          say "  Couldn't find a configure block in development.rb. Add this line inside it:", :yellow
+          say "  #{host_line.strip}", :yellow
+        end
       end
 
       def add_gitignore

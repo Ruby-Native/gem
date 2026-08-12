@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`ruby_native preview` now takes its port from `PORT` when that is set.** `rails server` picks its port from `PORT`, and so does the `config/puma.rb` that ships with Rails, so an app on anything but 3000 meant passing `--port` on every preview to repeat a number the server already had. The precedence is the one `rails server` uses: `--port` wins, then `PORT`, then 3000. A `PORT` that is not a usable port number falls back to 3000, and every message that names the port says when it came from the environment.
 
+### Fixed
+
+- **`rails generate ruby_native:install` now works in apps with a customized development config.** Apps that disable host checking with `config.hosts = nil` no longer crash on boot after installing, and apps whose development.rb uses a renamed configure block get the tunnel host added instead of silently skipped.
+
 ## [0.12.5] - 2026-08-11
 
 ### Added
