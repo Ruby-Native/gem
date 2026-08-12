@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`ruby_native preview` now takes its port from `PORT` when that is set.** `rails server` picks its port from `PORT`, and so does the `config/puma.rb` that ships with Rails, so an app on anything but 3000 meant passing `--port` on every preview to repeat a number the server already had. The precedence is the one `rails server` uses: `--port` wins, then `PORT`, then 3000. A `PORT` that is not a usable port number falls back to 3000, and every message that names the port says when it came from the environment.
 
+## [0.12.4] - 2026-08-11
+
+### Fixed
+
+- **A modal form's redirect now renders the page it returns to.** The landing page kept its stale pre-submit content, and a flash toast on it never showed. Advanced Mode, both platforms.
+- **Navbar buttons without an icon now show their title as text on Android**, matching iOS. They rendered the missing-icon placeholder before. Both modes.
+- **The floating action button now carries its `rubyNative/fab` accessibility identifier**, so UI tests can address it. Advanced Mode, iOS.
+
 ## [0.12.1] - 2026-08-06
 
 ### Added
