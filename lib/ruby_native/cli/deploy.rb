@@ -1,6 +1,7 @@
 require "json"
 require "net/http"
 require "uri"
+require "openssl"
 require "ruby_native/cli/credentials"
 require "ruby_native/version"
 
@@ -11,8 +12,22 @@ module RubyNative
       HOST = ENV.fetch("RUBY_NATIVE_HOST", "https://rubynative.com")
       POLL_INTERVAL = 5
       POLL_TIMEOUT = 600
+      PLATFORMS = %w[ios android].freeze
+      # Consecutive failures tolerated mid-poll; one blip must not kill a
+      # deploy whose build is succeeding server-side.
+      MAX_POLL_FAILURES = 3
 
       TokenExpiredError = Class.new(StandardError)
+      ConnectionError = Class.new(StandardError)
+
+      NETWORK_ERRORS = [
+        SocketError,
+        Errno::ECONNREFUSED,
+        Errno::ECONNRESET,
+        Net::OpenTimeout,
+        Net::ReadTimeout,
+        OpenSSL::SSL::SSLError
+      ].freeze
 
       def initialize(argv)
         @if_needed = argv.include?("--if-needed")
@@ -33,15 +48,37 @@ module RubyNative
         return if @if_needed
 
         poll_build_status(app_id, build)
+      rescue TokenExpiredError
+        abort_token_expired!
+      rescue ConnectionError => error
+        puts error.message
+        puts "Check your internet connection and run `ruby_native deploy` again."
+        exit 1
       end
 
       private
 
       def ensure_authenticated!
-        unless Credentials.token
+        return if Credentials.token
+
+        if ENV.key?("RUBY_NATIVE_TOKEN")
+          puts "RUBY_NATIVE_TOKEN is set but empty, so there is no usable token."
+          puts "Check the CI secret it references, or unset it and run `ruby_native login`."
+        else
           puts "Not logged in. Run `ruby_native login` first."
-          exit 1
         end
+        exit 1
+      end
+
+      def abort_token_expired!
+        if Credentials.env_token
+          puts "The server rejected your token."
+          puts "RUBY_NATIVE_TOKEN is set and overrides `ruby_native login`, so update"
+          puts "that environment variable with a fresh token."
+        else
+          puts "Token expired. Run `ruby_native login` again."
+        end
+        exit 1
       end
 
       def load_config!
@@ -50,8 +87,36 @@ module RubyNative
           exit 1
         end
 
+        @config = read_config
+      end
+
+      def read_config
         require "yaml"
-        @config = YAML.load_file(CONFIG_PATH, symbolize_names: true) || {}
+        YAML.load(rendered_config, filename: CONFIG_PATH, symbolize_names: true, aliases: true) || {}
+      rescue Psych::SyntaxError => error
+        puts "config/ruby_native.yml has a YAML syntax error:"
+        puts "  #{error.message}"
+        puts "Fix it and run `ruby_native deploy` again."
+        exit 1
+      end
+
+      # Rails renders this file as ERB before parsing, so the CLI must too or
+      # any <% %> tag breaks deploys while the app works fine.
+      def rendered_config
+        require "erb"
+        ERB.new(File.read(CONFIG_PATH), trim_mode: "-").result(erb_stub_binding)
+      rescue StandardError, SyntaxError
+        # A template only Rails can render still deploys; the CLI needs just app_id.
+        File.read(CONFIG_PATH)
+      end
+
+      # View helpers like image_url do not exist outside Rails; render them to
+      # "" rather than failing the deploy over values the CLI never reads.
+      def erb_stub_binding
+        stub = Object.new
+        def stub.method_missing(*, **) = ""
+        def stub.respond_to_missing?(*) = true
+        stub.instance_eval { binding }
       end
 
       def resolve_app_id!
@@ -94,7 +159,7 @@ module RubyNative
         when Net::HTTPNoContent
           nil
         when Net::HTTPSuccess
-          JSON.parse(response.body)
+          parse_json(response)
         when Net::HTTPUnauthorized
           raise TokenExpiredError
         else
@@ -119,30 +184,35 @@ module RubyNative
         when Net::HTTPUnauthorized
           raise TokenExpiredError
         when Net::HTTPCreated
-          build = JSON.parse(response.body)
+          build = parse_json(response)
+          unless build
+            puts "The build was queued, but its details could not be read."
+            puts "Check the Ruby Native dashboard for progress: #{HOST}/dashboard"
+            exit 0
+          end
           puts "Build ##{build["number"]} (v#{build["version"]}) queued."
           build
         when Net::HTTPTooManyRequests
           puts "Build limit reached. Try again later."
           exit 1
         when Net::HTTPConflict
-          data = JSON.parse(response.body)
-          puts data["error"]
+          data = parse_json(response)
+          puts data&.dig("error") || "A build is already in progress. Check the Ruby Native dashboard."
           exit 1
         when Net::HTTPUnprocessableEntity
-          data = JSON.parse(response.body)
-          puts "Cannot build: #{data["error"]}"
+          data = parse_json(response)
+          puts "Cannot build: #{data&.dig("error") || "the server rejected the request (422)."}"
           exit 1
         when Net::HTTPNotFound
-          puts "App not found. Remove ruby_native.app_id from config/ruby_native.yml and run `ruby_native deploy` again to re-link."
+          puts "The app linked in config/ruby_native.yml was not found on your account."
+          puts "It may have been archived. Check your apps first: #{HOST}/dashboard"
+          puts "If you meant to link a different app, remove `app_id` from"
+          puts "config/ruby_native.yml and run `ruby_native deploy` again."
           exit 1
         else
           puts "Failed to trigger build: #{response.code} #{response.message}"
           exit 1
         end
-      rescue TokenExpiredError
-        puts "Token expired. Run `ruby_native login` again."
-        exit 1
       end
 
       # --- Polling ---
@@ -155,6 +225,9 @@ module RubyNative
         print_status(last_status)
 
         started_at = Time.now
+        connection_failures = 0
+        not_found_count = 0
+        reported_error = nil
 
         loop do
           sleep POLL_INTERVAL
@@ -165,8 +238,42 @@ module RubyNative
             exit 1
           end
 
-          data = fetch_build_status(app_id, build_id)
-          next unless data
+          begin
+            state, payload = fetch_build_status(app_id, build_id)
+            connection_failures = 0
+          rescue ConnectionError => error
+            connection_failures += 1
+            next if connection_failures < MAX_POLL_FAILURES
+
+            puts ""
+            puts error.message
+            puts "Your build is most likely still running server-side. Check the"
+            puts "Ruby Native dashboard for the result: #{HOST}/dashboard"
+            exit 1
+          end
+
+          case state
+          when :not_found
+            not_found_count += 1
+            next if not_found_count < MAX_POLL_FAILURES
+
+            puts ""
+            puts "The server can no longer find this build (404). The app or build"
+            puts "may have been deleted or archived. Check the Ruby Native"
+            puts "dashboard: #{HOST}/dashboard"
+            exit 1
+          when :error
+            # The build keeps running server-side through a 500, so keep polling.
+            if payload != reported_error
+              reported_error = payload
+              puts ""
+              puts "#{URI(HOST).host} returned #{payload} while checking the build. Still trying..."
+            end
+            next
+          end
+
+          not_found_count = 0
+          data = payload
 
           if data["status"] != last_status
             last_status = data["status"]
@@ -196,6 +303,8 @@ module RubyNative
         puts "Check the Ruby Native dashboard for status."
       end
 
+      # Returns [:ok, data], [:not_found, nil], or [:error, description].
+      # Raises ConnectionError when the request never completed.
       def fetch_build_status(app_id, build_id)
         uri = URI("#{HOST}/api/v1/apps/#{app_id}/builds/#{build_id}")
         req = Net::HTTP::Get.new(uri)
@@ -205,11 +314,18 @@ module RubyNative
 
         case response
         when Net::HTTPSuccess
-          JSON.parse(response.body)
+          begin
+            [:ok, JSON.parse(response.body)]
+          rescue JSON::ParserError
+            [:error, "an unreadable response (HTTP #{response.code})"]
+          end
         when Net::HTTPUnauthorized
           puts ""
-          puts "Token expired. Run `ruby_native login` again."
-          exit 1
+          abort_token_expired!
+        when Net::HTTPNotFound
+          [:not_found, nil]
+        else
+          [:error, "HTTP #{response.code}"]
         end
       end
 
@@ -248,9 +364,14 @@ module RubyNative
         return "android" if argv.include?("--android")
 
         flag = argv.find { |a| a.start_with?("--platform=") }
-        return flag.split("=", 2).last if flag
+        return "ios" unless flag
 
-        "ios"
+        value = flag.split("=", 2).last
+        unless PLATFORMS.include?(value)
+          puts "Unknown platform #{value.inspect}. Use --platform=ios or --platform=android."
+          exit 1
+        end
+        value
       end
 
       def requested_platform
@@ -311,7 +432,7 @@ module RubyNative
         when Net::HTTPUnauthorized
           raise TokenExpiredError
         when Net::HTTPSuccess
-          JSON.parse(response.body)
+          parse_json(response)
         else
           puts "Failed to fetch apps: #{response.code}"
           nil
@@ -329,8 +450,7 @@ module RubyNative
 
         File.write(CONFIG_PATH, raw)
 
-        require "yaml"
-        @config = YAML.load_file(CONFIG_PATH, symbolize_names: true) || {}
+        @config = read_config
       end
 
       # --- HTTP ---
@@ -341,6 +461,17 @@ module RubyNative
         http.open_timeout = 10
         http.read_timeout = 30
         http.request(req)
+      rescue *NETWORK_ERRORS => error
+        raise ConnectionError, "Could not connect to #{uri.host} (#{error.class}: #{error.message})."
+      end
+
+      # Proxies and WAFs answer with HTML error pages; nil instead of a
+      # JSON::ParserError backtrace.
+      def parse_json(response)
+        JSON.parse(response.body)
+      rescue JSON::ParserError
+        puts "Unexpected response from #{URI(HOST).host}: HTTP #{response.code} with a body that is not JSON."
+        nil
       end
     end
   end
