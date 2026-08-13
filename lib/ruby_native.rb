@@ -44,7 +44,16 @@ module RubyNative
     path = Rails.root.join("config", "ruby_native.yml")
     return unless path.exist?
 
-    self.config = YAML.load(render_config(path)).deep_symbolize_keys
+    parsed = YAML.load(render_config(path), filename: path.to_s, aliases: true)
+
+    # An empty file, comments only, or ERB rendering to nothing parses to nil;
+    # treat it like a missing file instead of crashing Rails boot.
+    unless parsed.is_a?(Hash)
+      Rails.logger.warn("[RubyNative] #{path} is empty or not a YAML mapping; ignoring it.")
+      return
+    end
+
+    self.config = parsed.deep_symbolize_keys
     self.config[:app] ||= {}
     self.config[:app][:entry_path] ||= self.config.dig(:tabs, 0, :path) || "/"
     self.config[:auth] ||= {}
@@ -56,7 +65,7 @@ module RubyNative
 
   # config/ruby_native.yml is rendered as ERB before it is parsed, so a
   # developer can interpolate Rails helpers into it. The motivating case is the
-  # navbar logo: `logo: "<%= image_url("logo.png") %>"` resolves to a
+  # navbar logo: `logo: '<%= image_url("logo.png") %>'` resolves to a
   # fingerprinted asset URL the native app downloads and caches, and because the
   # digest changes whenever the asset changes, the cache busts itself. A full
   # URL (a CDN, say) works just as well; the app only ever sees a URL to fetch.

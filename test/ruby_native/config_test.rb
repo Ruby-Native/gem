@@ -130,7 +130,61 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  # A nil parse (empty file, comments only) used to crash Rails boot with a
+  # NoMethodError pointing into the gem.
+  def test_an_empty_config_file_is_ignored_with_a_warning
+    RubyNative.load_config
+    log = with_captured_log do
+      with_raw_config("# nothing configured yet\n") do
+        RubyNative.load_config
+        assert_equal "Test App", RubyNative.config[:app][:name]
+      end
+    end
+    assert_includes log, "ruby_native.yml"
+  end
+
+  def test_erb_rendering_to_nothing_is_ignored
+    with_captured_log do
+      with_raw_config("<% if false %>\napp:\n  name: Hidden\n<% end %>\n") do
+        RubyNative.load_config
+      end
+    end
+  end
+
+  def test_yaml_syntax_errors_name_the_config_file
+    with_raw_config("app: [\n") do
+      error = assert_raises(Psych::SyntaxError) { RubyNative.load_config }
+      assert_match(/ruby_native\.yml/, error.message)
+    end
+  end
+
+  def test_yaml_aliases_are_permitted
+    with_raw_config(<<~YAML) do
+      defaults: &defaults
+        icon: house
+      app:
+        name: App
+      tabs:
+        - <<: *defaults
+          title: Home
+          path: /
+    YAML
+      RubyNative.load_config
+      assert_equal "house", RubyNative.config[:tabs].first[:icon]
+    end
+  end
+
   private
+
+  def with_captured_log
+    io = StringIO.new
+    original = Rails.logger
+    Rails.logger = Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original
+  end
 
   def with_config(config)
     with_raw_config(config.deep_stringify_keys.to_yaml) { yield }
