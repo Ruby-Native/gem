@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **YAML anchors and aliases now work in `config/ruby_native.yml`**, both in Rails and the CLI.
+
+### Fixed
+
+- **Network problems no longer crash the CLI with a backtrace.** Connection failures say what went wrong and what to try next, and `ruby_native deploy` rides out brief blips while waiting for a build instead of dying mid-build.
+- **`ruby_native deploy --if-needed` now asks you to log in again when your token expires**, instead of failing CI with an unhandled error. Auth errors also call out `RUBY_NATIVE_TOKEN` when it is set, since it overrides `ruby_native login`, and an empty `RUBY_NATIVE_TOKEN` no longer hides a valid login.
+- **An empty `config/ruby_native.yml` no longer crashes Rails boot.** The file is skipped with a warning, and YAML syntax errors now name the file.
+- **ERB tags in `config/ruby_native.yml` no longer break `ruby_native deploy`.** The CLI renders the file the same way Rails does.
+- **`ruby_native login` always prints the authorization URL**, so you can sign in over SSH or in a container with no browser. The wait for authorization also survives network blips and reports what the server returned when something else goes wrong.
+- **`ruby_native preview` explains a failed tunnel**, with cloudflared's exit status and last output, instead of hanging or exiting silently. It also tells you when `config/ruby_native.yml` is missing or empty rather than reporting the tunnel ready.
+- **Deploying to a deleted or archived app no longer dead-ends.** The error points to the dashboard first and only suggests re-linking if you meant to switch apps, and a build that disappears mid-deploy stops the wait with a clear message instead of polling silently for 10 minutes.
+- **Typos fail fast.** Unknown commands and unknown `--platform=` values exit with an error instead of quietly building iOS, and `ruby_native` usage now lists every flag.
+- **A missing `config/ruby_native.yml` now returns a real error from `/native/config.json`** instead of `null`, so apps show a setup message instead of a confusing parse failure.
+- **The CLI works in containers without a home directory** when `RUBY_NATIVE_TOKEN` is set.
+
 ## [0.13.0] - 2026-08-12
 
 ### Added
