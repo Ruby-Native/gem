@@ -8,8 +8,15 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Turn your existing Rails app into a native iOS and Android app."
   spec.description = "Turn your existing Rails app into a native iOS and Android app with Ruby Native."
-  spec.homepage = "https://github.com/ruby-native/gem"
+  spec.homepage = "https://rubynative.com"
   spec.license = "MIT"
+
+  spec.metadata = {
+    "documentation_uri" => "https://rubynative.com/docs",
+    "source_code_uri" => "https://github.com/ruby-native/gem",
+    "changelog_uri" => "https://github.com/ruby-native/gem/blob/main/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
+  }
 
   spec.required_ruby_version = ">= 3.2"
 

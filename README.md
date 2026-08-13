@@ -80,6 +80,10 @@ See [rubynative.com/docs/cli](https://rubynative.com/docs/cli) for `deploy`, `lo
 
 Building with Inertia instead of ERB? `@ruby-native/react` and `@ruby-native/vue` provide the same helpers as npm packages, versioned alongside this gem. See [rubynative.com/docs/inertia](https://rubynative.com/docs/inertia) for setup.
 
+## AI agents
+
+Every docs page serves markdown: append `.md` to the URL or request `Accept: text/markdown`. For an index of everything, fetch [rubynative.com/llms.txt](https://rubynative.com/llms.txt), or [llms-full.txt](https://rubynative.com/llms-full.txt) for the complete docs as a single file.
+
 ## License
 
 MIT.
