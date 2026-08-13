@@ -13,6 +13,7 @@ module RubyNative
       PUBLIC_NAMESERVERS = ["1.1.1.1", "8.8.8.8"].freeze
       DEFAULT_PORT = 3000
       PORT_RANGE = (1..65_535)
+      OUTPUT_TAIL_LINES = 5
 
       def initialize(argv)
         @url = parse_option(argv, "--url")
@@ -31,6 +32,16 @@ module RubyNative
       def check_upstream!
         uri = URI("#{@upstream}#{CONFIG_PATH}")
         response = fetch_config_response(uri)
+
+        if config_missing?(response)
+          puts "Rails server is reachable at #{upstream_description}, but it has no Ruby Native config."
+          puts ""
+          puts "config/ruby_native.yml is missing or empty. Create it with:"
+          puts "  bin/rails generate ruby_native:install"
+          puts ""
+          puts "Then restart your Rails server and run `ruby_native preview` again."
+          exit 1
+        end
 
         return if response.is_a?(Net::HTTPSuccess)
 
@@ -68,6 +79,20 @@ module RubyNative
       rescue => e
         puts "Could not reach #{@upstream}#{CONFIG_PATH}: #{e.message}"
         exit 1
+      end
+
+      # An older gem serves 200 "null" when config/ruby_native.yml is missing;
+      # current gems serve 404 with the version header still set. Both mean the
+      # same thing: mounted, but nothing to serve.
+      def config_missing?(response)
+        case response
+        when Net::HTTPSuccess
+          response.body.to_s.strip == "null"
+        when Net::HTTPNotFound
+          !response["X-Ruby-Native-Version"].nil?
+        else
+          false
+        end
       end
 
       def fetch_config_response(uri, ip: nil)
@@ -181,27 +206,63 @@ module RubyNative
         end
         puts ""
 
-        stdin, stdout_err, wait_thread = Open3.popen2e(
-          "cloudflared", "tunnel", "--url", @upstream
-        )
-        stdin.close
+        output, wait_thread = spawn_tunnel
 
         @tunnel_pid = wait_thread.pid
         trap_interrupt
 
         tunnel_url = nil
+        recent_output = []
 
-        stdout_err.each_line do |line|
-          if line =~ TUNNEL_URL_PATTERN
+        output.each_line do |line|
+          recent_output << line.strip
+          recent_output.shift if recent_output.length > OUTPUT_TAIL_LINES
+          if tunnel_url.nil? && line =~ TUNNEL_URL_PATTERN
             tunnel_url = line[TUNNEL_URL_PATTERN]
             wait_for_tunnel(tunnel_url)
             display_qr(tunnel_url)
           end
         end
+
+        # Ctrl+C exits inside the trap, so reaching here means cloudflared
+        # itself stopped. Silence looked like either a hang or a clean exit.
+        report_tunnel_exit(tunnel_url, wait_thread.value, recent_output)
       rescue Interrupt
         # Handled by trap
       ensure
         kill_tunnel
+      end
+
+      def spawn_tunnel
+        stdin, stdout_err, wait_thread = Open3.popen2e(
+          "cloudflared", "tunnel", "--url", @upstream
+        )
+        stdin.close
+        [stdout_err, wait_thread]
+      end
+
+      def report_tunnel_exit(tunnel_url, status, recent_output)
+        puts ""
+        if tunnel_url
+          puts "The tunnel stopped: cloudflared exited (#{describe_exit(status)})."
+        else
+          puts "cloudflared exited (#{describe_exit(status)}) before the tunnel came up."
+        end
+
+        unless recent_output.empty?
+          puts ""
+          puts "Last output from cloudflared:"
+          recent_output.each { |line| puts "  #{line}" }
+        end
+
+        puts ""
+        puts "This usually means cloudflared could not reach Cloudflare. Check your"
+        puts "internet connection and run `ruby_native preview` again."
+        exit 1
+      end
+
+      def describe_exit(status)
+        status.exitstatus ? "status #{status.exitstatus}" : status.to_s
       end
 
       def display_qr(url)

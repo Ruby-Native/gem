@@ -80,8 +80,32 @@ class PreviewTest < Minitest::Test
   end
 
   def test_passes_when_config_endpoint_returns_200
-    stub_http_response(Net::HTTPSuccess.new("1.1", "200", "OK"))
+    stub_http_response(http_response(Net::HTTPSuccess, "200", body: '{"app":{"name":"Test"}}'))
     @preview.send(:check_upstream!)
+  end
+
+  # An old gem answers 200 "null" when config/ruby_native.yml is missing, which
+  # used to sail through as "ready" and fail later on the phone.
+  def test_exits_when_config_endpoint_serves_null
+    stub_http_response(http_response(Net::HTTPSuccess, "200", body: "null"))
+    out, _err = capture_io do
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
+    end
+    assert_match(/missing or empty/, out)
+    assert_match(/ruby_native:install/, out)
+  end
+
+  # A 404 carrying the gem's version header comes from the engine itself, so
+  # the mount is fine and the config file is what's missing.
+  def test_a_404_from_the_gem_means_missing_config_not_a_bad_mount
+    response = http_response(Net::HTTPNotFound, "404")
+    response["X-Ruby-Native-Version"] = "0.13.0"
+    stub_http_response(response)
+    out, _err = capture_io do
+      assert_raises(SystemExit) { @preview.send(:check_upstream!) }
+    end
+    assert_match(/missing or empty/, out)
+    refute_match(/installed and mounted/, out)
   end
 
   def test_exits_when_config_endpoint_returns_404
@@ -199,6 +223,38 @@ class PreviewTest < Minitest::Test
     assert_match(/did not respond within 60s/, out)
   end
 
+  def test_tunnel_exit_before_url_prints_status_and_last_output
+    preview = tunnel_preview(
+      "2026-08-13 INF Requesting new quick Tunnel on trycloudflare.com...\n" \
+      "2026-08-13 ERR failed to request quick Tunnel: lookup api.trycloudflare.com: no such host\n",
+      exitstatus: 1
+    )
+
+    out, _err = capture_io do
+      error = assert_raises(SystemExit) { preview.send(:start_tunnel) }
+      assert_equal 1, error.status
+    end
+    assert_match(/cloudflared exited \(status 1\) before the tunnel came up/, out)
+    assert_match(/failed to request quick Tunnel/, out)
+    assert_match(/run `ruby_native preview` again/, out)
+  end
+
+  def test_tunnel_death_after_the_url_is_reported_not_silent
+    preview = tunnel_preview(
+      "https://example.trycloudflare.com\n" \
+      "2026-08-13 ERR connection terminated\n",
+      exitstatus: 1
+    )
+    preview.define_singleton_method(:wait_for_tunnel) { |_url| }
+    preview.define_singleton_method(:display_qr) { |_url| }
+
+    out, _err = capture_io do
+      assert_raises(SystemExit) { preview.send(:start_tunnel) }
+    end
+    assert_match(/The tunnel stopped/, out)
+    assert_match(/connection terminated/, out)
+  end
+
   def test_display_qr_links_to_the_app_download_page
     out, _err = capture_io do
       @preview.send(:display_qr, "https://example.trycloudflare.com")
@@ -263,6 +319,25 @@ class PreviewTest < Minitest::Test
   end
 
   private
+
+  def http_response(klass, code, body: "")
+    response = klass.new("1.1", code, code)
+    response.instance_variable_set(:@body, body)
+    response.instance_variable_set(:@read, true)
+    response
+  end
+
+  # start_tunnel with a canned process: stubbing the trap and the kill keeps the
+  # test from touching real signals or PIDs.
+  def tunnel_preview(output, exitstatus:)
+    preview = RubyNative::CLI::Preview.new(["--port", "3000"])
+    status = Struct.new(:exitstatus).new(exitstatus)
+    thread = Struct.new(:pid, :value).new(4242, status)
+    preview.define_singleton_method(:spawn_tunnel) { [StringIO.new(output), thread] }
+    preview.define_singleton_method(:trap_interrupt) {}
+    preview.define_singleton_method(:kill_tunnel) {}
+    preview
+  end
 
   def upstream_for(argv)
     RubyNative::CLI::Preview.new(argv).instance_variable_get(:@upstream)
