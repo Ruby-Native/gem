@@ -191,6 +191,7 @@ module RubyNative
             exit 0
           end
           puts "Build ##{build["number"]} (v#{build["version"]}) queued."
+          print_notice(build)
           build
         when Net::HTTPTooManyRequests
           puts "Build limit reached. Try again later."
@@ -274,6 +275,7 @@ module RubyNative
 
           not_found_count = 0
           data = payload
+          print_notice(data)
 
           if data["status"] != last_status
             last_status = data["status"]
@@ -332,6 +334,17 @@ module RubyNative
       def print_status(status)
         label = status_labels[status]
         puts "  #{label}..." if label
+      end
+
+      # Server-provided warnings (a lapsed payment, say) reach customers with
+      # no gem release. Deduped, since every status poll repeats the string.
+      def print_notice(data)
+        notice = data["notice"]
+        return unless notice.is_a?(String) && !notice.strip.empty?
+        return if notice == @printed_notice
+
+        @printed_notice = notice
+        puts "Notice: #{notice}"
       end
 
       def status_labels

@@ -245,6 +245,69 @@ class DeployTest < Minitest::Test
     assert_match(/Token expired/, out)
   end
 
+  # --- Server notices ---
+
+  def test_trigger_prints_a_server_notice
+    body = '{"id":1,"number":7,"version":"1.0","status":"queued","notice":"Payment failed, this release goes to TestFlight only."}'
+    deploy = trigger_deploy(http_response(Net::HTTPCreated, "201", body: body))
+
+    out, _err = capture_io { deploy.send(:trigger_build, "app_123") }
+    assert_match(/Notice: Payment failed, this release goes to TestFlight only\./, out)
+  end
+
+  def test_trigger_prints_no_notice_line_without_one
+    body = '{"id":1,"number":7,"version":"1.0","status":"queued"}'
+    deploy = trigger_deploy(http_response(Net::HTTPCreated, "201", body: body))
+
+    out, _err = capture_io { deploy.send(:trigger_build, "app_123") }
+    refute_match(/Notice:/, out)
+  end
+
+  def test_poll_prints_a_repeated_notice_once
+    deploy = poll_deploy
+    notice = "Payment failed, this release goes to TestFlight only."
+    results = [
+      -> { [:ok, { "status" => "building", "notice" => notice }] },
+      -> { [:ok, { "status" => "building", "notice" => notice }] },
+      -> { [:ok, { "status" => "success", "version" => "1.0", "number" => 7, "notice" => notice }] }
+    ]
+    deploy.define_singleton_method(:fetch_build_status) { |_app_id, _build_id| results.shift.call }
+
+    out, _err = capture_io do
+      deploy.send(:poll_build_status, "app_123", { "id" => 1, "status" => "queued" })
+    end
+    assert_equal 1, out.scan(/Notice:/).count
+    assert_match(/Notice: #{Regexp.escape(notice)}/, out)
+    assert_match(/Build succeeded!/, out)
+  end
+
+  # A future server could scope notices per status; a changed string prints again.
+  def test_poll_prints_a_changed_notice_again
+    deploy = poll_deploy
+    results = [
+      -> { [:ok, { "status" => "building", "notice" => "First heads up." }] },
+      -> { [:ok, { "status" => "success", "version" => "1.0", "number" => 7, "notice" => "Second heads up." }] }
+    ]
+    deploy.define_singleton_method(:fetch_build_status) { |_app_id, _build_id| results.shift.call }
+
+    out, _err = capture_io do
+      deploy.send(:poll_build_status, "app_123", { "id" => 1, "status" => "queued" })
+    end
+    assert_match(/Notice: First heads up\./, out)
+    assert_match(/Notice: Second heads up\./, out)
+  end
+
+  def test_notice_ignores_non_string_and_blank_values
+    deploy = RubyNative::CLI::Deploy.new([])
+
+    out, _err = capture_io do
+      deploy.send(:print_notice, { "notice" => { "unexpected" => "shape" } })
+      deploy.send(:print_notice, { "notice" => " " })
+      deploy.send(:print_notice, {})
+    end
+    assert_empty out
+  end
+
   # --- Trigger responses ---
 
   def test_trigger_404_suggests_checking_the_dashboard_before_unlinking
