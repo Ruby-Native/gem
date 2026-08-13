@@ -22,15 +22,33 @@ module RubyNative
         warn "Screenshots are now captured by rubynative.com against your deployed site."
         warn "See https://rubynative.com/docs/screenshots for the new flow."
         exit 1
+      when nil
+        print_usage
       else
-        puts "Usage: ruby_native <command>"
+        puts "Unknown command: #{command}"
         puts ""
-        puts "Commands:"
-        puts "  deploy        Trigger an iOS build (use --android for Android)"
-        puts "  login         Authenticate with Ruby Native"
-        puts "  logout        Remove stored credentials"
-        puts "  preview       Start a tunnel and display a QR code"
+        print_usage
+        exit 1
       end
+    rescue => error
+      puts "Something went wrong: #{error.class}: #{error.message}"
+      puts "If this keeps happening, report it: https://github.com/ruby-native/gem/issues"
+      exit 1
+    end
+
+    def self.print_usage
+      puts "Usage: ruby_native <command> [options]"
+      puts ""
+      puts "Commands:"
+      puts "  deploy        Trigger a build and wait for it to finish"
+      puts "    --android          Build for Android instead of iOS"
+      puts "    --platform=NAME    Build for ios or android"
+      puts "    --if-needed        Skip when this gem version is already built"
+      puts "  login         Authenticate with Ruby Native"
+      puts "  logout        Remove stored credentials"
+      puts "  preview       Start a tunnel and display a QR code"
+      puts "    --port PORT        Rails server port (default: PORT or 3000)"
+      puts "    --url URL          Tunnel to this URL instead of localhost"
     end
   end
 end
