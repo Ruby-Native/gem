@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Typos fail fast.** Unknown commands and unknown `--platform=` values exit with an error instead of quietly building iOS, and `ruby_native` usage now lists every flag.
 - **A missing `config/ruby_native.yml` now returns a real error from `/native/config.json`** instead of `null`, so apps show a setup message instead of a confusing parse failure.
 - **The CLI works in containers without a home directory** when `RUBY_NATIVE_TOKEN` is set.
+- **The branded navbar no longer flickers while pushing a screen.** It dropped to a plain white title bar mid-push before snapping back. Advanced Mode, Android only.
+- **Pushing a screen now slides, like iOS, instead of cross-fading when the navbar is branded.** The whole screen used to wash out mid-transition. Advanced Mode, Android only.
 
 ## [0.13.0] - 2026-08-12
 
