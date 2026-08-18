@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Attach a native menu to any element on the page with `native_menu_tag`.** Tapping the element pops a menu right on it, with icons, checkmarks, and red destructive rows: an anchored `UIMenu` on iOS, a Material dropdown on Android. Picking an item navigates or clicks a web element, exactly like a nav bar menu item. React and Vue get a matching `NativeMenu` component. Both platforms, both modes.
+- **Menu items can render red with `destructive: true`**, for delete-style actions, in nav bar menus and in-content menus alike. Both platforms, both modes.
 - **`ruby_native deploy` now relays notices from the server**, like a heads-up that a lapsed subscription payment sent an iOS release to TestFlight only. Future notices need no gem update.
 - **YAML anchors and aliases now work in `config/ruby_native.yml`**, both in Rails and the CLI.
 

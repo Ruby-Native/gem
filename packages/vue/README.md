@@ -39,6 +39,7 @@ Each component renders a hidden `data-native-*` signal element that the Ruby Nat
 - `NativeNavbar` - native navigation bar with title and buttons
 - `NativeButton` - native nav bar button (icon, title, href, or click target)
 - `NativeMenuItem` - item inside a native menu
+- `NativeMenu` - native menu attached to any element on the page via a CSS selector
 - `NativeSegment` - segmented button in the nav bar (iOS only)
 - `NativeShareButton` - native nav bar button that opens the share sheet
 - `NativeShareMenuItem` - menu item that opens the share sheet

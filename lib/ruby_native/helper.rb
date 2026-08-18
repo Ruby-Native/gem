@@ -198,6 +198,29 @@ module RubyNative
       tag.div(data: data, hidden: true)
     end
 
+    # Attaches a native menu to an element already on the page. `anchor:` is a
+    # CSS selector for that element; tapping it in the app opens a native menu
+    # anchored to it with the block's items, and picking one navigates or
+    # clicks a web element exactly like a nav bar menu item does.
+    #
+    #   <span id="status-pill">Want to read</span>
+    #
+    #   <%= native_menu_tag anchor: "#status-pill" do |menu| %>
+    #     <% menu.item "Currently reading", click: "#status-reading" %>
+    #     <% menu.item "Finished",          click: "#status-finished" %>
+    #   <% end %>
+    #
+    # The anchor element stays an ordinary element on the web, so give it its
+    # own web behavior (or a `native-hidden` fallback) if it needs one there.
+    def native_menu_tag(anchor:, &block)
+      anchor = anchor.to_s
+      raise ArgumentError, "native_menu_tag requires an anchor CSS selector" if anchor.strip.empty?
+
+      builder = NavbarMenuBuilder.new(self)
+      capture(builder, &block) if block
+      tag.div(data: { native_menu: "", native_anchor: anchor }, hidden: true) { builder.to_html }
+    end
+
     def native_overscroll_tag(top:, bottom: nil)
       tag.div(data: { native_overscroll_top: top, native_overscroll_bottom: bottom || top }, hidden: true)
     end
@@ -392,13 +415,14 @@ module RubyNative
         @items = []
       end
 
-      def item(title, href: nil, click: nil, icon: nil, icons: nil, selected: false, action: nil)
+      def item(title, href: nil, click: nil, icon: nil, icons: nil, selected: false, action: nil, destructive: false)
         resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_menu_item: "", native_title: title }
         data[:native_href] = href if href
         data[:native_click] = click if click
         data[:native_icon] = resolved if resolved
         data[:native_selected] = "" if selected
+        data[:native_destructive] = "" if destructive
         data[:native_action] = RubyNative::Helper.validate_action(action) if action
         add(@context.tag.div(data: data))
       end

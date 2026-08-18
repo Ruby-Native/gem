@@ -224,6 +224,58 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_raises(ArgumentError) { native_fab_tag }
   end
 
+  def test_native_menu_tag
+    html = native_menu_tag(anchor: "#status-pill") do |menu|
+      menu.item "Currently reading", click: "#status-reading"
+      menu.item "Finished", click: "#status-finished"
+    end
+
+    assert_includes html, 'data-native-menu=""'
+    assert_includes html, 'data-native-anchor="#status-pill"'
+    assert_includes html, "hidden"
+    assert_includes html, 'data-native-menu-item'
+    assert_includes html, 'data-native-title="Currently reading"'
+    assert_includes html, 'data-native-click="#status-reading"'
+    assert_includes html, 'data-native-title="Finished"'
+    assert_includes html, 'data-native-click="#status-finished"'
+  end
+
+  # The items are read out of the menu element by the JS bridge, so they have to
+  # be nested inside it, not siblings of it.
+  def test_native_menu_tag_nests_items
+    html = native_menu_tag(anchor: ".menu-anchor") do |menu|
+      menu.item "Edit", href: "/edit"
+    end
+
+    assert_match(/data-native-menu="".*data-native-menu-item.*<\/div>\z/m, html)
+  end
+
+  def test_native_menu_tag_item_options
+    html = native_menu_tag(anchor: "#anchor") do |menu|
+      menu.item "All", href: "/all", icon: "list.bullet", selected: true, action: :replace
+      menu.item "Delete", click: "#delete", destructive: true
+    end
+
+    assert_includes html, 'data-native-href="/all"'
+    assert_includes html, 'data-native-icon="list.bullet"'
+    assert_includes html, 'data-native-selected'
+    assert_includes html, 'data-native-action="replace"'
+    assert_includes html, 'data-native-destructive'
+  end
+
+  def test_native_menu_tag_without_a_block
+    html = native_menu_tag(anchor: "#anchor")
+
+    assert_includes html, 'data-native-anchor="#anchor"'
+    refute_includes html, 'data-native-menu-item'
+    refute_includes html, "data-native-title"
+  end
+
+  def test_native_menu_tag_requires_anchor
+    assert_raises(ArgumentError) { native_menu_tag(anchor: nil) }
+    assert_raises(ArgumentError) { native_menu_tag(anchor: "  ") }
+  end
+
   def test_resolve_icon_prefers_platform_specific
     resolved = RubyNative::Helper.resolve_icon(
       icon: "cup.and.saucer",

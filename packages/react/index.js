@@ -209,10 +209,11 @@ export function NativeButton({ position = "trailing", icon, icons, title, href, 
  * @param {string} [props.icon]
  * @param {NativeIcons} [props.icons]
  * @param {boolean} [props.selected]
+ * @param {boolean} [props.destructive] Renders red, for destructive actions.
  * @param {NativeAction} [props.action]
  * @returns {import("react").ReactElement}
  */
-export function NativeMenuItem({ title, href, click, icon, icons, selected, action }) {
+export function NativeMenuItem({ title, href, click, icon, icons, selected, destructive, action }) {
   const resolved = resolveIcon(icon, icons)
   /** @type {Record<string, any>} */
   const props = { "data-native-menu-item": true }
@@ -221,8 +222,26 @@ export function NativeMenuItem({ title, href, click, icon, icons, selected, acti
   if (click) props["data-native-click"] = click
   if (resolved) props["data-native-icon"] = resolved
   if (selected) props["data-native-selected"] = ""
+  if (destructive) props["data-native-destructive"] = ""
   if (action) props["data-native-action"] = action
   return createElement("div", props)
+}
+
+/**
+ * Attaches a native menu to an element already on the page. `anchor` is a CSS
+ * selector for that element; tapping it in the app opens a native menu
+ * anchored to it with the `NativeMenuItem` children, and picking one navigates
+ * or clicks a web element exactly like a nav bar menu item does. The anchor
+ * element stays an ordinary element on the web, so give it its own web
+ * behavior there. The counterpart of the `native_menu_tag` Rails helper.
+ * @param {object} props
+ * @param {string} props.anchor
+ * @param {import("react").ReactNode} [props.children]
+ * @returns {import("react").ReactElement}
+ */
+export function NativeMenu({ anchor, children }) {
+  if (!anchor || !anchor.trim()) throw new Error("NativeMenu requires an `anchor` CSS selector")
+  return createElement("div", { "data-native-menu": "", "data-native-anchor": anchor, hidden: true }, children)
 }
 
 /**

@@ -214,6 +214,7 @@ export const NativeMenuItem = defineComponent({
     icon: String,
     icons: /** @type {import("vue").PropType<NativeIcons>} */ (Object),
     selected: { type: Boolean, default: undefined },
+    destructive: { type: Boolean, default: undefined },
     action: /** @type {import("vue").PropType<NativeAction>} */ (String)
   },
   render() {
@@ -225,8 +226,28 @@ export const NativeMenuItem = defineComponent({
     if (this.click) attrs["data-native-click"] = this.click
     if (resolved) attrs["data-native-icon"] = resolved
     if (this.selected) attrs["data-native-selected"] = ""
+    if (this.destructive) attrs["data-native-destructive"] = ""
     if (this.action) attrs["data-native-action"] = this.action
     return h("div", attrs)
+  }
+})
+
+/**
+ * Attaches a native menu to an element already on the page. `anchor` is a CSS
+ * selector for that element; tapping it in the app opens a native menu
+ * anchored to it with the `NativeMenuItem` slot content, and picking one
+ * navigates or clicks a web element exactly like a nav bar menu item does.
+ * The anchor element stays an ordinary element on the web, so give it its own
+ * web behavior there. The counterpart of the `native_menu_tag` Rails helper.
+ */
+export const NativeMenu = defineComponent({
+  name: "NativeMenu",
+  props: {
+    anchor: { type: String, required: true }
+  },
+  render() {
+    if (!this.anchor || !this.anchor.trim()) throw new Error("NativeMenu requires an `anchor` CSS selector")
+    return h("div", { "data-native-menu": "", "data-native-anchor": this.anchor, hidden: true }, this.$slots.default?.())
   }
 })
 
