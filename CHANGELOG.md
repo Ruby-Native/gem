@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Menu items can render red with `destructive: true`**, for delete-style actions, in nav bar menus and in-content menus alike. Both platforms, both modes.
 - **`ruby_native deploy` now relays notices from the server**, like a heads-up that a lapsed subscription payment sent an iOS release to TestFlight only. Future notices need no gem update.
 - **YAML anchors and aliases now work in `config/ruby_native.yml`**, both in Rails and the CLI.
+- **Android chrome is now a clean neutral gray in light and dark mode, instead of a Material-tinted surface you didn't pick.** The navigation bar, tab bar, and floating action button all go neutral, with your `tint_color` on the selected tab and accents, matching iOS. Advanced Mode gets the biggest fix: its bars and button previously ignored `tint_color` entirely and rendered Material's default purple. Both modes.
+- **Override Android's bar colors with `appearance.android`.** Set `background_color` on `android.navbar` or `android.tab_bar` (the navbar also takes `foreground_color`), each a hex string or `{ light:, dark: }` for dark mode. Wins over the neutral defaults on Android without touching iOS, whose Liquid Glass bars Apple doesn't let apps recolor. Both modes. [Docs](https://rubynative.com/docs/appearance)
+- **Color the floating action button right from the page**: `native_fab_tag icon: "plus", color: "#D97706"`. The button is tinted with it — tinted Liquid Glass on iOS, a colored Material FAB on Android — with the icon color derived automatically to stay readable. Pass `color: :tint` to inherit your `tint_color` instead of repeating the hex. React and Vue `NativeFab` take the same `color` prop. Both platforms, both modes. [Docs](https://rubynative.com/docs/fab)
 
 ### Fixed
 

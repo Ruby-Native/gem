@@ -56,6 +56,20 @@ appearance:
   #   # Omit to let the system decide.
   #   status_bar: light
 
+  # On Android, the bars are a neutral gray, light or dark to match the theme,
+  # with tint_color on the selected tab, matching iOS. Override either bar
+  # here; iOS keeps the system Liquid Glass bars. (The floating action button
+  # is colored per page from native_fab_tag instead.)
+  # https://rubynative.com/docs/appearance#android-chrome-colors
+  # android:
+  #   navbar:
+  #     # Each accepts a hex string, or { light:, dark: } for dark mode support.
+  #     background_color: "#1E293B"
+  #     # Title and icon color. Defaults to black or white, picked for contrast.
+  #     foreground_color: "#FFFFFF"
+  #   tab_bar:
+  #     background_color: "#1E293B"
+
   # Show a launch splash while the first screen loads. It holds your launch icon
   # and background_color in frame, with a spinner, until the web content paints.
   # Off by default; set enabled: true to turn it on.

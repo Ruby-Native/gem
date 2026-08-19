@@ -321,7 +321,8 @@ export const NativeFab = defineComponent({
     icon: String,
     icons: /** @type {import("vue").PropType<NativeIcons>} */ (Object),
     href: String,
-    click: String
+    click: String,
+    color: String
   },
   render() {
     const resolved = resolveIcon(this.icon, this.icons)
@@ -330,6 +331,7 @@ export const NativeFab = defineComponent({
     const attrs = { "data-native-fab": true, "data-native-icon": resolved, hidden: true }
     if (this.href) attrs["data-native-href"] = this.href
     if (this.click) attrs["data-native-click"] = this.click
+    if (this.color) attrs["data-native-color"] = this.color
     return h("div", attrs)
   }
 })

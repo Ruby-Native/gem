@@ -309,15 +309,17 @@ export function NativeShareMenuItem({ title = "Share", url, icon = "square.and.a
  * @param {NativeIcons} [props.icons]
  * @param {string} [props.href]
  * @param {string} [props.click]
+ * @param {string} [props.color]
  * @returns {import("react").ReactElement}
  */
-export function NativeFab({ icon, icons, href, click }) {
+export function NativeFab({ icon, icons, href, click, color }) {
   const resolved = resolveIcon(icon, icons)
   if (!resolved) throw new Error("NativeFab requires `icon` or `icons`")
   /** @type {Record<string, any>} */
   const props = { "data-native-fab": true, "data-native-icon": resolved, hidden: true }
   if (href) props["data-native-href"] = href
   if (click) props["data-native-click"] = click
+  if (color) props["data-native-color"] = color
   return createElement("div", props)
 }
 

@@ -218,6 +218,17 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes html, 'data-native-icon="star"'
     refute_includes html, 'data-native-href'
     refute_includes html, 'data-native-click'
+    refute_includes html, 'data-native-color'
+  end
+
+  def test_native_fab_tag_with_color
+    html = native_fab_tag(icon: "plus", color: "#D97706")
+    assert_includes html, 'data-native-color="#D97706"'
+  end
+
+  def test_native_fab_tag_with_tint_color
+    html = native_fab_tag(icon: "plus", color: :tint)
+    assert_includes html, 'data-native-color="tint"'
   end
 
   def test_native_fab_tag_requires_icon

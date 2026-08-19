@@ -189,12 +189,17 @@ module RubyNative
       tag.div(data: data, hidden: true) { builder.to_html }
     end
 
-    def native_fab_tag(icon: nil, icons: nil, href: nil, click: nil)
+    # `color:` tints the button: tinted Liquid Glass on iOS, a colored
+    # Material FAB on Android. The icon color is derived automatically to
+    # stay readable against it. Pass `:tint` instead of a hex to inherit
+    # `appearance.tint_color`, keeping the button in sync with the app accent.
+    def native_fab_tag(icon: nil, icons: nil, href: nil, click: nil, color: nil)
       resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: try(:native_platform))
       raise ArgumentError, "native_fab_tag requires an icon" if resolved.nil?
       data = { native_fab: true, native_icon: resolved }
       data[:native_href] = href if href
       data[:native_click] = click if click
+      data[:native_color] = color if color
       tag.div(data: data, hidden: true)
     end
 
