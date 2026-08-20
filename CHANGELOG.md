@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Share buttons no longer crash the app when appearance colors use `{ light:, dark: }` pairs.** Tapping any share control killed the app instantly if `tint_color` or `background_color` had light and dark values. iOS only, both modes.
+
 ## [0.14.0] - 2026-08-19
 
 ### Added
