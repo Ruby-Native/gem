@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Android builds no longer request photo and video permissions, so Google Play's "Photo and video permissions" declaration no longer appears.** Previously requested whenever `permissions.photo_library` was set; file uploads are unaffected.
+- **Android debug builds trust certificates you've installed on the device, so local HTTPS domains (puma-dev, mkcert) now load.** Release builds are unchanged.
+
 ## [0.14.2] - 2026-08-21
 
 ### Added
