@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Added
+
+- **`native_os_build` reads the device's OS build from the User-Agent**, like `"23F79"` on iOS or `"UQ1A.240205.004"` on Android. `nil` on the web and in apps built before this release. Both platforms, both modes.
+
 ### Fixed
 
 - **Share buttons no longer crash the app when appearance colors use `{ light:, dark: }` pairs.** Tapping any share control killed the app instantly if `tint_color` or `background_color` had light and dark values. iOS only, both modes.
+- **Requests the app sends itself, like the push notification token POST, now carry the Ruby Native User-Agent.** They arrived as `okhttp/4.12.0` or a CFNetwork default before, so `native_app?` and the version helpers treated them as web traffic. Both platforms, both modes.
 
 ## [0.14.0] - 2026-08-19
 

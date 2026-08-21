@@ -2,16 +2,17 @@ module RubyNative
   module NativeDetection
     extend ActiveSupport::Concern
 
-    # Matches "Ruby Native iOS/5.2/35 iOS/26.5.2 RubyNative/0.12.5". The build and
-    # OS groups are optional: apps built before the UA carried them send only
-    # "Ruby Native iOS/5.2", and the optional group keeps the OS capture from
-    # swallowing that app version.
-    SIGNATURE = %r{Ruby Native (?:iOS|Android)/([\d.]+)(?:/([\d.]+) (?:iOS|Android)/([\d.]+))?}
+    # Matches "Ruby Native iOS/5.2/35 iOS/26.5.2/23F79 RubyNative/0.12.5". The
+    # build, OS, and OS build groups are optional: apps built before the UA
+    # carried them send only "Ruby Native iOS/5.2" (or later "... iOS/26.5.2"
+    # without the OS build), and the optional groups keep the OS capture from
+    # swallowing the app version.
+    SIGNATURE = %r{Ruby Native (?:iOS|Android)/([\d.]+)(?:/([\d.]+) (?:iOS|Android)/([\d.]+)(?:/([\w.]+))?)?}
 
     included do
       if respond_to?(:helper_method)
         helper_method :native_app?, :native_version, :native_platform,
-          :native_app_version, :native_app_build, :native_os_version
+          :native_app_version, :native_app_build, :native_os_version, :native_os_build
       end
     end
 
@@ -48,6 +49,12 @@ module RubyNative
     # before the User-Agent carried it.
     def native_os_version
       request.user_agent.to_s[SIGNATURE, 3]
+    end
+
+    # The device's OS build, like "23F79" (iOS) or "UQ1A.240205.004" (Android).
+    # Nil for web browsers and apps built before the User-Agent carried it.
+    def native_os_build
+      request.user_agent.to_s[SIGNATURE, 4]
     end
   end
 end
