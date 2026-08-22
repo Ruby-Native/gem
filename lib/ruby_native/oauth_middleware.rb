@@ -18,7 +18,7 @@ module RubyNative
       request = ActionDispatch::Request.new(env)
       on_oauth_path = oauth_path?(request)
       started_native_oauth = on_oauth_path && request.params["ruby_native"] == "1"
-      callback_scheme = permitted_scheme(request.params["callback_scheme"]) if started_native_oauth
+      param_scheme = permitted_scheme(request.params["callback_scheme"]) if started_native_oauth
 
       status, headers, body = @app.call(env)
 
@@ -26,27 +26,27 @@ module RubyNative
         relax_cookie_samesite!(headers)
       end
 
-      if started_native_oauth && callback_scheme.present? && redirect?(status)
+      if started_native_oauth && param_scheme.present? && redirect?(status)
         Rails.logger.debug { "[RubyNative] OAuth started for #{request.path}, setting tracking cookie" }
-        set_cookie(headers, callback_scheme)
+        set_cookie(headers, param_scheme)
       end
 
-      stored_scheme = permitted_scheme(read_cookie(request))
+      # On a start request the param names the app asking right now, so a stale
+      # cookie from another app on the same domain must never win.
+      callback_scheme = started_native_oauth ? param_scheme : permitted_scheme(read_cookie(request))
 
-      if stored_scheme && redirect?(status)
+      if callback_scheme && redirect?(status)
         location = headers["location"] || headers["Location"]
 
         if auth_failure?(location)
           Rails.logger.info { "[RubyNative] OAuth failed, redirecting to native app" }
-          delete_cookie(headers)
-          return redirect_to_native(stored_scheme, error: true)
+          return redirect_to_native(callback_scheme, error: true)
         end
 
         if internal_redirect?(request, location)
           token = build_token(headers, location)
           Rails.logger.info { "[RubyNative] OAuth succeeded, redirecting to native app" }
-          delete_cookie(headers)
-          return redirect_to_native(stored_scheme, token: token)
+          return redirect_to_native(callback_scheme, token: token)
         end
       end
 
@@ -116,8 +116,14 @@ module RubyNative
       nil
     end
 
-    def delete_cookie(headers)
-      Rack::Utils.delete_set_cookie_header!(headers, COOKIE_NAME, path: "/")
+    # Attributes must match set_cookie or browsers keep the original cookie.
+    def expire_cookie(headers)
+      headers["set-cookie"] = Rack::Utils.delete_set_cookie_header(COOKIE_NAME, {
+        path: "/",
+        httponly: true,
+        secure: true,
+        same_site: :none
+      })
     end
 
     def verifier
@@ -133,16 +139,12 @@ module RubyNative
     # breaks OmniAuth's state verification. Relax existing cookies
     # to SameSite=None so the session cookie survives Apple's callback.
     def relax_cookie_samesite!(headers)
-      raw = headers["set-cookie"]
-      return unless raw
-
-      cookies = raw.is_a?(Array) ? raw : raw.split("\n")
-      headers["set-cookie"] = cookies.map { |cookie|
+      SetCookieHeader.rewrite!(headers) do |cookie|
         next cookie unless cookie.match?(/SameSite=Lax/i)
         cookie.gsub(/SameSite=Lax/i, "SameSite=None").then { |c|
           c.include?("Secure") ? c : "#{c}; Secure"
         }
-      }.join("\n")
+      end
     end
 
     def redirect?(status)
@@ -165,23 +167,22 @@ module RubyNative
     end
 
     def build_token(headers, redirect_url)
-      raw_cookies = headers["set-cookie"] || headers["Set-Cookie"]
-      cookies = case raw_cookies
-      when String then raw_cookies.split("\n")
-      when Array then raw_cookies
-      else []
-      end
+      # Restoring the tracking cookie into the app's cookie jar would hijack the
+      # next in-app redirect, so it never rides along in the token.
+      cookies = SetCookieHeader.read(headers).reject { |c| c.start_with?("#{COOKIE_NAME}=") }
 
       redirect_url = "/" if auth_start_path?(redirect_url)
 
-      Rails.logger.info { "[RubyNative] Captured #{cookies.size} cookies for token (raw type: #{raw_cookies.class})" }
+      Rails.logger.info { "[RubyNative] Captured #{cookies.size} cookies for token" }
 
       self.class.build_token(cookies: cookies, redirect_url: redirect_url)
     end
 
     def redirect_to_native(callback_scheme, token: nil, error: false)
       query = error ? "error=true" : "token=#{CGI.escape(token)}"
-      [302, {"location" => "#{callback_scheme}://auth/callback?#{query}"}, [""]]
+      headers = {"location" => "#{callback_scheme}://auth/callback?#{query}"}
+      expire_cookie(headers)
+      [302, headers, [""]]
     end
 
     def auth_start_path?(url)

@@ -25,7 +25,7 @@ class RubyNative::TunnelCookieMiddlewareTest < Minitest::Test
     assert_match(/HttpOnly/, headers["set-cookie"])
   end
 
-  def test_strips_domain_from_multiple_cookies
+  def test_strips_domain_from_multiple_cookies_in_a_rack2_string
     cookies = [
       "_session=abc; domain=.trycloudflare.com; path=/",
       "_csrf=xyz; domain=.trycloudflare.com; path=/"
@@ -35,11 +35,12 @@ class RubyNative::TunnelCookieMiddlewareTest < Minitest::Test
 
     _status, headers, _body = app.call(env)
 
-    assert_kind_of Array, headers["set-cookie"]
-    assert_equal 2, headers["set-cookie"].length
-    refute headers["set-cookie"].any? { |c| c =~ /domain=/i }
-    assert headers["set-cookie"].any? { |c| c =~ /_session=abc/ }
-    assert headers["set-cookie"].any? { |c| c =~ /_csrf=xyz/ }
+    assert_kind_of String, headers["set-cookie"]
+    stripped = headers["set-cookie"].split("\n")
+    assert_equal 2, stripped.length
+    refute stripped.any? { |c| c =~ /domain=/i }
+    assert stripped.any? { |c| c =~ /_session=abc/ }
+    assert stripped.any? { |c| c =~ /_csrf=xyz/ }
   end
 
   def test_preserves_array_shape_for_multiple_cookies_under_rack_3
@@ -55,6 +56,16 @@ class RubyNative::TunnelCookieMiddlewareTest < Minitest::Test
     assert_kind_of Array, headers["set-cookie"]
     assert_equal 2, headers["set-cookie"].length
     refute headers["set-cookie"].any? { |c| c =~ /domain=/i }
+  end
+
+  def test_preserves_array_shape_for_a_single_cookie_under_rack_3
+    cookies = ["_session=abc; domain=.trycloudflare.com; path=/"]
+    app = build_middleware([200, {"set-cookie" => cookies}, ["OK"]])
+    env = Rack::MockRequest.env_for("http://abc-123.trycloudflare.com/")
+
+    _status, headers, _body = app.call(env)
+
+    assert_equal ["_session=abc; path=/"], headers["set-cookie"]
   end
 
   def test_preserves_cookies_without_domain

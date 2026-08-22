@@ -72,15 +72,24 @@ class RubyNative::OAuthMiddlewareTest < Minitest::Test
     assert_equal "/dashboard", data[:redirect_url]
   end
 
-  def test_native_redirect_does_not_include_tracking_cookie
+  def test_native_redirect_expires_the_tracking_cookie
     scheme = "rubynative-com-example-app"
     app = build_middleware([302, {"location" => "/menu"}, [""]])
     env = Rack::MockRequest.env_for("/auth/callback", "HTTP_COOKIE" => "#{RubyNative::OAuthMiddleware::COOKIE_NAME}=#{sign_cookie(scheme)}")
 
     _status, headers, _body = app.call(env)
 
-    refute headers["set-cookie"]&.include?(RubyNative::OAuthMiddleware::COOKIE_NAME),
-      "Native redirect should not contain the tracking cookie"
+    assert_expired_tracking_cookie headers
+  end
+
+  def test_auth_failure_redirect_expires_the_tracking_cookie
+    scheme = "rubynative-com-example-app"
+    app = build_middleware([302, {"location" => "/auth/failure?message=access_denied"}, [""]])
+    env = Rack::MockRequest.env_for("/auth/callback", "HTTP_COOKIE" => "#{RubyNative::OAuthMiddleware::COOKIE_NAME}=#{sign_cookie(scheme)}")
+
+    _status, headers, _body = app.call(env)
+
+    assert_expired_tracking_cookie headers
   end
 
   def test_auth_failure_redirects_with_error
@@ -118,6 +127,23 @@ class RubyNative::OAuthMiddlewareTest < Minitest::Test
     assert_match(/secure/i, all_cookies)
   end
 
+  def test_relaxing_samesite_preserves_the_rack3_array_shape
+    cookies = [
+      "_myapp_session=abc123; path=/; SameSite=Lax",
+      "_csrf=xyz; path=/; SameSite=Lax; Secure"
+    ]
+    app = build_middleware([302, {"location" => "https://provider.com/oauth", "set-cookie" => cookies}, [""]])
+    env = Rack::MockRequest.env_for("/auth/test_provider?ruby_native=1&callback_scheme=rubynative-com-example-app")
+
+    _status, headers, _body = app.call(env)
+
+    assert_kind_of Array, headers["set-cookie"]
+    assert_equal 3, headers["set-cookie"].length, "Expected both relaxed cookies plus the tracking cookie"
+    refute headers["set-cookie"].any? { |c| c.include?("\n") }
+    refute headers["set-cookie"].any? { |c| c.match?(/samesite=lax/i) }
+    assert headers["set-cookie"].all? { |c| c.match?(/secure/i) }
+  end
+
   def test_oauth_start_does_not_relax_samesite_without_native_app
     session_cookie = "_myapp_session=abc123; path=/; SameSite=Lax"
     app = build_middleware([302, {"location" => "https://provider.com/oauth", "set-cookie" => session_cookie}, [""]])
@@ -152,6 +178,45 @@ class RubyNative::OAuthMiddlewareTest < Minitest::Test
     data = RubyNative::OAuthMiddleware.read_token(token)
 
     assert_equal "/", data[:redirect_url]
+  end
+
+  def test_start_request_param_scheme_wins_over_a_stale_cookie_from_another_app
+    stale_scheme = "rubynative-com-other-app"
+    fresh_scheme = "rubynative-com-example-app"
+    app = build_middleware([302, {"location" => "/dashboard", "set-cookie" => "_session_id=abc123"}, [""]])
+    env = Rack::MockRequest.env_for("/auth/test_provider?ruby_native=1&callback_scheme=#{fresh_scheme}",
+      "HTTP_COOKIE" => "#{RubyNative::OAuthMiddleware::COOKIE_NAME}=#{sign_cookie(stale_scheme)}")
+
+    status, headers, _body = app.call(env)
+
+    assert_equal 302, status
+    assert_match %r{^#{fresh_scheme}://auth/callback\?token=}, headers["location"]
+  end
+
+  def test_start_request_with_rejected_param_scheme_ignores_a_stale_cookie
+    stale_scheme = "rubynative-com-other-app"
+    app = build_middleware([302, {"location" => "/dashboard"}, [""]])
+    env = Rack::MockRequest.env_for("/auth/test_provider?ruby_native=1&callback_scheme=#{CGI.escape("https://evil.example.com")}",
+      "HTTP_COOKIE" => "#{RubyNative::OAuthMiddleware::COOKIE_NAME}=#{sign_cookie(stale_scheme)}")
+
+    status, headers, _body = app.call(env)
+
+    assert_equal 302, status
+    assert_equal "/dashboard", headers["location"]
+  end
+
+  def test_token_minted_on_a_start_request_excludes_the_tracking_cookie
+    scheme = "rubynative-com-example-app"
+    app = build_middleware([302, {"location" => "/dashboard", "set-cookie" => "_session_id=abc123"}, [""]])
+    env = Rack::MockRequest.env_for("/auth/test_provider?ruby_native=1&callback_scheme=#{scheme}")
+
+    _status, headers, _body = app.call(env)
+
+    data = RubyNative::OAuthMiddleware.read_token(extract_token(headers["location"]))
+
+    assert_includes data[:cookies], "_session_id=abc123"
+    refute data[:cookies].any? { |c| c.start_with?("#{RubyNative::OAuthMiddleware::COOKIE_NAME}=") },
+      "The token must not restore the tracking cookie into the app"
   end
 
   def test_invalid_cookie_does_not_intercept
@@ -237,6 +302,16 @@ class RubyNative::OAuthMiddlewareTest < Minitest::Test
 
   def build_middleware(response)
     RubyNative::OAuthMiddleware.new(FakeApp.new(response))
+  end
+
+  def assert_expired_tracking_cookie(headers)
+    cookie = Array(headers["set-cookie"]).join("\n")
+    assert_match(/^#{RubyNative::OAuthMiddleware::COOKIE_NAME}=;/, cookie,
+      "Expected the native redirect to expire the tracking cookie")
+    assert_match(/max-age=0/i, cookie)
+    assert_match(/path=\//i, cookie)
+    assert_match(/samesite=none/i, cookie)
+    assert_match(/secure/i, cookie)
   end
 
   def sign_cookie(scheme)
