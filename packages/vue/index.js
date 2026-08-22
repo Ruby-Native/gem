@@ -33,17 +33,46 @@ function rubyNativePlatform() {
   return null
 }
 
+const ACTIONS = ["push", "replace"]
+const PRESENTATION_INTENTS = ["root"]
+const TOAST_APPEARANCES = ["inverted", "system"]
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function validateAction(value) {
+  if (!ACTIONS.includes(value)) {
+    throw new Error(`action must be "push" or "replace", got ${JSON.stringify(value)}`)
+  }
+  return value
+}
+
 /**
  * @param {string} [icon]
  * @param {NativeIcons} [icons]
  * @returns {string | undefined}
  */
 function resolveIcon(icon, icons) {
+  if (icons != null && (typeof icons !== "object" || Array.isArray(icons))) {
+    throw new Error(`icons must be an object like { ios: "square.and.arrow.up", android: "share" }`)
+  }
   if (icons) {
     const platform = rubyNativePlatform()
     if (platform && icons[platform]) return icons[platform]
   }
-  return icon
+  return icon || fallbackIcon(icons)
+}
+
+// A web render has no platform, so `icons` alone must still resolve (ios then
+// android, like the Rails helper) or NativeFab would throw on pages that are fine in the app.
+/**
+ * @param {NativeIcons} [icons]
+ * @returns {string | undefined}
+ */
+function fallbackIcon(icons) {
+  if (!icons) return undefined
+  return icons.ios || icons.android
 }
 
 /**
@@ -118,6 +147,9 @@ export const NativePresentation = defineComponent({
   name: "NativePresentation",
   props: { intent: { type: String, default: "root" } },
   render() {
+    if (!PRESENTATION_INTENTS.includes(this.intent)) {
+      throw new Error(`intent must be "root", got ${JSON.stringify(this.intent)}`)
+    }
     return h("div", { "data-native-presentation": this.intent, hidden: true })
   }
 })
@@ -146,6 +178,9 @@ export const NativeToast = defineComponent({
   },
   render() {
     if (!this.message) return null
+    if (!TOAST_APPEARANCES.includes(this.appearance)) {
+      throw new Error(`appearance must be "inverted" or "system", got ${JSON.stringify(this.appearance)}`)
+    }
     /** @type {Record<string, any>} */
     const attrs = {
       "data-native-toast": "",
@@ -227,7 +262,7 @@ export const NativeMenuItem = defineComponent({
     if (resolved) attrs["data-native-icon"] = resolved
     if (this.selected) attrs["data-native-selected"] = ""
     if (this.destructive) attrs["data-native-destructive"] = ""
-    if (this.action) attrs["data-native-action"] = this.action
+    if (this.action) attrs["data-native-action"] = validateAction(this.action)
     return h("div", attrs)
   }
 })
@@ -280,7 +315,7 @@ export const NativeShareButton = defineComponent({
     position: { type: /** @type {import("vue").PropType<NativeButtonPosition>} */ (String), default: /** @type {NativeButtonPosition} */ ("trailing") },
     title: { type: String, default: "Share" },
     icon: { type: String, default: "square.and.arrow.up" },
-    icons: /** @type {import("vue").PropType<NativeIcons>} */ (Object),
+    icons: { type: /** @type {import("vue").PropType<NativeIcons>} */ (Object), default: () => ({ android: "share" }) },
     url: String
   },
   render() {
@@ -301,7 +336,7 @@ export const NativeShareMenuItem = defineComponent({
     title: { type: String, default: "Share" },
     url: String,
     icon: { type: String, default: "square.and.arrow.up" },
-    icons: /** @type {import("vue").PropType<NativeIcons>} */ (Object),
+    icons: { type: /** @type {import("vue").PropType<NativeIcons>} */ (Object), default: () => ({ android: "share" }) },
     selected: { type: Boolean, default: undefined }
   },
   render() {
@@ -415,5 +450,5 @@ export const NativeBackButton = defineComponent({
  * @returns {Record<string, unknown>}
  */
 export function nativeHaptic(feedback = "success", data = {}) {
-  return { ...data, "data-native-haptic": feedback }
+  return { ...data, "data-native-haptic": feedback || "success" }
 }

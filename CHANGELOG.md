@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Android builds no longer request photo and video permissions, so Google Play's "Photo and video permissions" declaration no longer appears.** Previously requested whenever `permissions.photo_library` was set; file uploads are unaffected.
 - **Android debug builds trust certificates you've installed on the device, so local HTTPS domains (puma-dev, mkcert) now load.** Release builds are unchanged.
+- **The React and Vue components now behave exactly like the Rails helpers.** `NativeFab` no longer crashes web and server renders when only `icons` is given, share buttons show the right glyph on Android, and invalid `action`, `intent`, and `appearance` values raise a clear error instead of rendering a broken signal.
 
 ## [0.14.2] - 2026-08-21
 

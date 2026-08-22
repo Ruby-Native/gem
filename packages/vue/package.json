@@ -2,23 +2,32 @@
   "name": "@ruby-native/vue",
   "version": "0.14.2",
   "description": "Vue components for Ruby Native",
+  "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
-  "files": ["index.js", "index.d.ts", "README.md"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
   "scripts": {
+    "test": "node --test test/*.test.mjs",
     "types": "tsc -p .",
     "prepublishOnly": "npm run types"
   },
   "peerDependencies": {
-    "vue": ">=3",
-    "@inertiajs/vue3": ">=2"
+    "@inertiajs/vue3": ">=2",
+    "vue": ">=3"
   },
   "peerDependenciesMeta": {
-    "@inertiajs/vue3": { "optional": true }
+    "@inertiajs/vue3": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@vue/server-renderer": "^3.5.41",
     "typescript": "^5.9.0",
-    "vue": "^3.5.0"
+    "vue": "^3.5.41"
   },
   "repository": {
     "type": "git",
