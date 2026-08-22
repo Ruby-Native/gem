@@ -102,6 +102,27 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  def test_a_scalar_oauth_path_is_coerced_to_an_array
+    with_config(app: {}, tabs: [], auth: {oauth_paths: "/auth/google"}) do
+      RubyNative.load_config
+      assert_equal ["/auth/google"], RubyNative.config[:auth][:oauth_paths]
+    end
+  end
+
+  def test_a_scalar_oauth_path_is_coerced_in_the_config_json
+    with_config(app: {}, tabs: [], auth: {oauth_paths: "/auth/google"}) do
+      RubyNative.load_config
+      assert_equal ["/auth/google"], RubyNative.config_as_json[:auth][:oauth_paths]
+    end
+  end
+
+  def test_oauth_paths_stay_absent_when_unconfigured
+    with_config(app: {}, tabs: []) do
+      RubyNative.load_config
+      refute RubyNative.config[:auth].key?(:oauth_paths)
+    end
+  end
+
   def test_config_is_rendered_as_erb
     with_raw_config(<<~YAML) do
       app:
