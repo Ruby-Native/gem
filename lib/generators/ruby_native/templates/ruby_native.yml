@@ -69,6 +69,9 @@ appearance:
   #     foreground_color: "#FFFFFF"
   #   tab_bar:
   #     background_color: "#1E293B"
+  #     # Icon and label color. Defaults to the theme's, with tint_color on the
+  #     # selected tab. Set this and unselected tabs dim to 60% of it.
+  #     foreground_color: "#FFFFFF"
 
   # Show a launch splash while the first screen loads. It holds your launch icon
   # and background_color in frame, with a spinner, until the web content paints.
