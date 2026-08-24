@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Set your Android tab bar's icon and label color with `appearance.android.tab_bar.foreground_color`.** The selected tab takes it at full strength and the rest dim to 60%, so a dark branded bar stays readable. Accepts a hex string or `{ light:, dark: }`. Both modes. [Docs](https://rubynative.com/docs/appearance)
+
+### Fixed
+
+- **Push notifications now work in Advanced Mode on Android.** A page with `native_push_tag` never asked for permission, so those apps could not receive a single notification.
+- **Signing out or switching accounts in Advanced Mode on Android now clears the previous account from every tab.** Tabs you weren't looking at held on to the old session's pages. Apps that always show their tab bar were hit hardest, since nothing else on screen changed.
+- **Switching accounts from a tab other than the first no longer leaves that tab's page under the first tab.** Normal Mode on Android.
+
 ## [0.14.2] - 2026-08-21
 
 ### Added
