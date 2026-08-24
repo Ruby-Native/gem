@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Android builds no longer request photo and video permissions, so Google Play's "Photo and video permissions" declaration no longer appears.** Previously requested whenever `permissions.photo_library` was set; file uploads are unaffected.
+- **Android debug builds trust certificates you've installed on the device, so local HTTPS domains (puma-dev, mkcert) now load.** Release builds are unchanged.
+- **The React and Vue components now behave exactly like the Rails helpers.** `NativeFab` no longer crashes web and server renders when only `icons` is given, share buttons show the right glyph on Android, and invalid `action`, `intent`, and `appearance` values raise a clear error instead of rendering a broken signal.
+- **Native OAuth sign-in can no longer land in the wrong app.** The cookie that routes the flow back to the app now expires as soon as sign-in completes, so a stale one from an earlier attempt, or from another app on the same domain, no longer hijacks the redirect. Both platforms, both modes.
+- **Writing a single `auth.oauth_paths` entry without a list no longer breaks the app.** `oauth_paths: /auth/google` used to fail the whole config and show an error screen on launch. Both platforms, both modes.
+
 ## [0.14.3] - 2026-08-24
 
 ### Added

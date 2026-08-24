@@ -33,17 +33,46 @@ function rubyNativePlatform() {
   return null
 }
 
+const ACTIONS = ["push", "replace"]
+const PRESENTATION_INTENTS = ["root"]
+const TOAST_APPEARANCES = ["inverted", "system"]
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function validateAction(value) {
+  if (!ACTIONS.includes(value)) {
+    throw new Error(`action must be "push" or "replace", got ${JSON.stringify(value)}`)
+  }
+  return value
+}
+
 /**
  * @param {string} [icon]
  * @param {NativeIcons} [icons]
  * @returns {string | undefined}
  */
 function resolveIcon(icon, icons) {
+  if (icons != null && (typeof icons !== "object" || Array.isArray(icons))) {
+    throw new Error(`icons must be an object like { ios: "square.and.arrow.up", android: "share" }`)
+  }
   if (icons) {
     const platform = rubyNativePlatform()
     if (platform && icons[platform]) return icons[platform]
   }
-  return icon
+  return icon || fallbackIcon(icons)
+}
+
+// A web render has no platform, so `icons` alone must still resolve (ios then
+// android, like the Rails helper) or NativeFab would throw on pages that are fine in the app.
+/**
+ * @param {NativeIcons} [icons]
+ * @returns {string | undefined}
+ */
+function fallbackIcon(icons) {
+  if (!icons) return undefined
+  return icons.ios || icons.android
 }
 
 /**
@@ -119,6 +148,9 @@ export function NativeForm() {
  * @returns {import("react").ReactElement}
  */
 export function NativePresentation({ intent = "root" } = {}) {
+  if (!PRESENTATION_INTENTS.includes(intent)) {
+    throw new Error(`intent must be "root", got ${JSON.stringify(intent)}`)
+  }
   return createElement("div", { "data-native-presentation": intent, hidden: true })
 }
 
@@ -143,6 +175,9 @@ export function NativeReview() {
  */
 export function NativeToast({ message, icon, icons, duration = 4, appearance = "inverted" }) {
   if (!message) return null
+  if (!TOAST_APPEARANCES.includes(appearance)) {
+    throw new Error(`appearance must be "inverted" or "system", got ${JSON.stringify(appearance)}`)
+  }
   /** @type {Record<string, any>} */
   const props = {
     "data-native-toast": "",
@@ -223,7 +258,7 @@ export function NativeMenuItem({ title, href, click, icon, icons, selected, dest
   if (resolved) props["data-native-icon"] = resolved
   if (selected) props["data-native-selected"] = ""
   if (destructive) props["data-native-destructive"] = ""
-  if (action) props["data-native-action"] = action
+  if (action) props["data-native-action"] = validateAction(action)
   return createElement("div", props)
 }
 
@@ -273,7 +308,7 @@ export function NativeSegment({ title, href, click, selected }) {
  * @param {string} [props.url]
  * @returns {import("react").ReactElement}
  */
-export function NativeShareButton({ position = "trailing", title = "Share", icon = "square.and.arrow.up", icons, url }) {
+export function NativeShareButton({ position = "trailing", title = "Share", icon = "square.and.arrow.up", icons = { android: "share" }, url }) {
   const resolved = resolveIcon(icon, icons)
   /** @type {Record<string, any>} */
   const props = { "data-native-button": true, "data-native-share": "" }
@@ -293,7 +328,7 @@ export function NativeShareButton({ position = "trailing", title = "Share", icon
  * @param {boolean} [props.selected]
  * @returns {import("react").ReactElement}
  */
-export function NativeShareMenuItem({ title = "Share", url, icon = "square.and.arrow.up", icons, selected }) {
+export function NativeShareMenuItem({ title = "Share", url, icon = "square.and.arrow.up", icons = { android: "share" }, selected }) {
   const resolved = resolveIcon(icon, icons)
   /** @type {Record<string, any>} */
   const props = { "data-native-menu-item": true, "data-native-share": "", "data-native-title": title }
@@ -398,5 +433,5 @@ export function NativeBackButton({ children, className, onClick, ...rest }) {
  * @returns {Record<string, unknown>}
  */
 export function nativeHaptic(feedback = "success", data = {}) {
-  return { ...data, "data-native-haptic": feedback }
+  return { ...data, "data-native-haptic": feedback || "success" }
 }

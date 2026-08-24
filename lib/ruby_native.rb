@@ -4,6 +4,7 @@ require "ruby_native/helper"
 require "ruby_native/native_version"
 require "ruby_native/native_detection"
 require "ruby_native/inertia_support"
+require "ruby_native/set_cookie_header"
 require "ruby_native/oauth_middleware"
 require "ruby_native/tunnel_cookie_middleware"
 require "ruby_native/iap/event"
@@ -181,17 +182,22 @@ module RubyNative
   # "callback" and send sign-in into a loop. The callback round-trip is handled
   # automatically by OAuthMiddleware's tracking cookie, so it never needs
   # listing. Drop any entry that is the "/callback" child of another listed
-  # path and warn, so a copied-in callback can't break native sign-in.
+  # path and warn, so a copied-in callback can't break native sign-in. The value
+  # is always written back as an array: a scalar in YAML fails the whole native
+  # config decode on both platforms.
   def self.normalize_oauth_paths
-    paths = Array(self.config.dig(:auth, :oauth_paths))
-    callbacks = paths.select { |path| paths.any? { |start| path == "#{start}/callback" } }
-    return if callbacks.empty?
+    auth = self.config[:auth]
+    return unless auth.is_a?(Hash) && auth.key?(:oauth_paths)
 
-    Rails.logger.warn(
-      "[RubyNative] Ignoring OAuth callback path(s) in config/ruby_native.yml " \
-      "(#{callbacks.join(", ")}). List only the authorize path; callbacks are handled automatically."
-    )
-    self.config[:auth][:oauth_paths] = paths - callbacks
+    paths = Array(auth[:oauth_paths])
+    callbacks = paths.select { |path| paths.any? { |start| path == "#{start}/callback" } }
+    if callbacks.any?
+      Rails.logger.warn(
+        "[RubyNative] Ignoring OAuth callback path(s) in config/ruby_native.yml " \
+        "(#{callbacks.join(", ")}). List only the authorize path; callbacks are handled automatically."
+      )
+    end
+    auth[:oauth_paths] = paths - callbacks
   end
 
   # Entries are path prefixes: "/pair/" links every URL under it. A leading

@@ -34,10 +34,9 @@ module RubyNative
     end
 
     def strip_cookie_domain!(headers)
-      raw = headers["set-cookie"]
-      cookies = raw.is_a?(Array) ? raw : raw.split("\n")
-      stripped = cookies.map { |cookie| cookie.gsub(/;\s*domain=[^;]*/i, "") }
-      headers["set-cookie"] = (stripped.length == 1) ? stripped.first : stripped
+      SetCookieHeader.rewrite!(headers) do |cookie|
+        cookie.gsub(/;\s*domain=[^;]*/i, "")
+      end
     end
   end
 end
