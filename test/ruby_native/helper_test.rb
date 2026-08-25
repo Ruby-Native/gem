@@ -759,6 +759,16 @@ class RubyNative::HelperTest < ActionView::TestCase
     assert_includes builder.to_html, 'data-native-title="Edit"'
   end
 
+  def test_native_keyboard_tag_hides_the_toolbar_by_default
+    html = native_keyboard_tag
+    assert_includes html, 'data-native-keyboard-toolbar="false"'
+    assert_includes html, "hidden"
+  end
+
+  def test_native_keyboard_tag_renders_nothing_when_the_toolbar_is_kept
+    assert_equal "", native_keyboard_tag(toolbar: true)
+  end
+
   def test_native_haptic_data_defaults_to_success
     data = native_haptic_data
     assert_equal "success", data[:native_haptic]

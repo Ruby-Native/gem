@@ -230,6 +230,13 @@ module RubyNative
       tag.div(data: { native_overscroll_top: top, native_overscroll_bottom: bottom || top }, hidden: true)
     end
 
+    # Hides the iOS keyboard toolbar (the previous/next/Done bar) on this page.
+    # Page-level: the toolbar belongs to the web view, not to individual fields.
+    def native_keyboard_tag(toolbar: false)
+      return "".html_safe if toolbar
+      tag.div(data: { native_keyboard_toolbar: false }, hidden: true)
+    end
+
     def native_haptic_data(feedback = :success, **data)
       feedback = feedback.to_s
       feedback = "success" if feedback.empty?
