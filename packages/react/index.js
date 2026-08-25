@@ -373,6 +373,19 @@ export function NativeOverscroll({ top, bottom }) {
 }
 
 /**
+ * Hides the iOS keyboard toolbar (the previous/next/Done bar) on this page.
+ * Page-level: the toolbar belongs to the web view, not to individual fields.
+ *
+ * @param {object} props
+ * @param {boolean} [props.toolbar]
+ * @returns {import("react").ReactElement | null}
+ */
+export function NativeKeyboard({ toolbar = false }) {
+  if (toolbar) return null
+  return createElement("div", { "data-native-keyboard-toolbar": "false", hidden: true })
+}
+
+/**
  * @param {object} props
  * @param {string} [props.title]
  * @param {string} [props.click]

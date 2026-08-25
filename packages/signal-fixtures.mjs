@@ -535,6 +535,17 @@ export const fixtures = [
     })]
   },
   {
+    name: "hides the keyboard toolbar by default",
+    component: "NativeKeyboard",
+    expected: [signal({ "data-native-keyboard-toolbar": "false" })]
+  },
+  {
+    name: "renders nothing when the toolbar is kept",
+    component: "NativeKeyboard",
+    props: { toolbar: true },
+    expected: []
+  },
+  {
     name: "defaults to Save and the submit selector",
     component: "NativeSubmitButton",
     expected: [signal({
