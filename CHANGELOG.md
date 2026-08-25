@@ -14,6 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Native OAuth sign-in can no longer land in the wrong app.** The cookie that routes the flow back to the app now expires as soon as sign-in completes, so a stale one from an earlier attempt, or from another app on the same domain, no longer hijacks the redirect. Both platforms, both modes.
 - **Writing a single `auth.oauth_paths` entry without a list no longer breaks the app.** `oauth_paths: /auth/google` used to fail the whole config and show an error screen on launch. Both platforms, both modes.
 - **Android apps no longer stop responding after the system reclaims them in the background.** Returning to the app could leave every page unable to submit a form, follow a link, or run any of its JavaScript until it was force quit. Normal Mode on Android, in every release since 0.12.0.
+- **Buttons, menu items, and FABs that set both `href` and `click` now follow the href.** They ran the click instead, the opposite of every other platform and mode. Advanced Mode on Android.
+- **Your `errors` copy now reaches end users in Advanced Mode on Android.** They always saw the built-in English text there, whatever you configured.
+- **A paywall with more than one purchase button now updates the button the customer tapped.** The first button on the page took the "Processing" and "Subscribed" states instead, and could be left stuck on "Processing". iOS.
+- **A failed purchase now shows a plain message instead of raw system error text.** iOS.
+- **A FAB with a `color` no longer reports a false "unknown signal" warning.** Both platforms, both modes.
+- **VoiceOver now announces tab badge counts in Advanced Mode on iOS.** The badge was visible but silent.
 
 ## [0.14.3] - 2026-08-24
 
