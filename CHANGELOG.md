@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Added
+
+- **New `native_keyboard_tag` hides the previous/next/Done bar above the keyboard.** For chat screens where the composer should sit flush against the keyboard, the way it does in Messages. iOS only. [Docs](https://rubynative.com/docs/keyboard)
+- **`NativeKeyboard` is available for React and Vue**, matching the Rails helper.
+
+### Changed
+
+- **Dragging a page down now dismisses the keyboard.** iOS, both modes.
+
 ### Fixed
 
 - **Android builds no longer request photo and video permissions, so Google Play's "Photo and video permissions" declaration no longer appears.** Previously requested whenever `permissions.photo_library` was set; file uploads are unaffected.
