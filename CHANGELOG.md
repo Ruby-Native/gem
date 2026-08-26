@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Changed
+
+- **Android tabs now load when first tapped, matching iOS.** Every tab loaded at launch before, whatever the config said; `eager: true` tabs still load up front. Advanced Mode on Android.
+
+### Fixed
+
+- **Signing in now refreshes the other tabs.** A tab that had already loaded while signed out kept its signed-out page, telling the user to sign in again. Advanced Mode, both platforms.
+- **Selecting a tab last loaded while signed out no longer resets the app to the first tab.** Advanced Mode, both platforms.
+
 ## [0.15.0] - 2026-08-25
 
 ### Added
