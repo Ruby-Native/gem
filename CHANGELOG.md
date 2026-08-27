@@ -9,12 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Android tabs now load when first tapped, matching iOS.** Every tab loaded at launch before, whatever the config said; `eager: true` tabs still load up front. Advanced Mode on Android.
+- **With no `background_color` set, Android pages now sit on pure white, or near-black in dark mode.** The default carried a faint cast of the tint color before.
 
 ### Fixed
 
+- **An app with no `appearance` block in `config/ruby_native.yml` now launches.** It showed the error screen on every launch before. Both platforms.
+- **Menus, segmented controls, and selected navbar buttons on Android now use your tint color.** They showed Material's default purple, whatever `tint_color` said. Advanced Mode.
+- **JavaScript `alert`, `confirm`, and `prompt` dialogs now use your tint color on Android.** They showed Material's default purple in Advanced Mode before. Both modes.
 - **Signing in now refreshes the other tabs.** A tab that had already loaded while signed out kept its signed-out page, telling the user to sign in again. Advanced Mode, both platforms.
 - **Selecting a tab last loaded while signed out no longer resets the app to the first tab.** Advanced Mode, both platforms.
 - **Tapping a push notification now opens its `path` while the app is running.** The tap only brought the app back to the foreground before. Advanced Mode on Android.
+- **Tapping an App Link while the app is already running now opens the linked page.** It worked only when the app wasn't running before. Advanced Mode on Android.
 - **Tapping a push notification with a `path` no longer crashes the app on a cold start.** Advanced Mode on Android.
 - **The app no longer launches showing an `eager: true` tab.** It starts on the first tab, with the eager tab preloaded behind it. Advanced Mode on iOS.
 

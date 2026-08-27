@@ -99,6 +99,17 @@ class RubyNative::ConfigAsJsonTest < Minitest::Test
     refute generic.key?(:icons)
   end
 
+  def test_emits_empty_appearance_when_the_block_is_omitted
+    write_config(
+      app: {name: "Test App"},
+      tabs: [{title: "Home", path: "/", icon: "house"}]
+    )
+    RubyNative.load_config
+
+    # Shipped app binaries require the key at decode; it must always be present.
+    assert_equal({}, RubyNative.config_as_json[:appearance])
+  end
+
   def test_navbar_appearance_passes_through
     write_config(
       app: {name: "Test App"},

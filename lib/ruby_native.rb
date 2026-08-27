@@ -131,6 +131,9 @@ module RubyNative
     return config if config.nil?
 
     payload = config.deep_dup
+    # Shipped app binaries have required the `appearance` key at decode; keep
+    # emitting it so they still boot when the YAML omits the block.
+    payload[:appearance] ||= {}
     errors = error_screen_config(payload[:errors])
     if errors.empty?
       payload.delete(:errors)
