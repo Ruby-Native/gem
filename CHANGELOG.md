@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **Deep links now open the linked page when the app isn't already running.** App Links and tapped notifications landed on the home screen instead when `appearance.theme` was set to the opposite of the device's theme. Advanced Mode on Android.
+
 ## [0.15.1] - 2026-08-27
 
 ### Changed
