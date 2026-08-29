@@ -62,6 +62,7 @@ module RubyNative
     normalize_linked_paths
     backfill_tab_icons
     backfill_error_icons
+    warn_on_duplicate_tab_keys
   end
 
   # config/ruby_native.yml is rendered as ERB before it is parsed, so a
@@ -93,6 +94,21 @@ module RubyNative
 
       tab[:icon] ||= icons[:ios] || icons[:android]
     end
+  end
+
+  # A tab's `key` names its copy in the host app's locale files, so two tabs
+  # sharing one read the same translations and one of them is always
+  # mislabeled. Warn rather than raise: both tabs still render, and a typo in
+  # the config should never take down boot.
+  def self.warn_on_duplicate_tab_keys
+    keys = Array(self.config[:tabs]).filter_map { |tab| tab[:key] if tab.is_a?(Hash) }
+    duplicates = keys.tally.select { |_, count| count > 1 }.keys
+    return if duplicates.empty?
+
+    Rails.logger.warn(
+      "[RubyNative] Duplicate tab key(s) in config/ruby_native.yml " \
+      "(#{duplicates.join(", ")}). Each tab needs its own key, or they share a title."
+    )
   end
 
   # Mirrors `backfill_tab_icons` for the error screen: fills a state's flat
@@ -134,6 +150,7 @@ module RubyNative
     # Shipped app binaries have required the `appearance` key at decode; keep
     # emitting it so they still boot when the YAML omits the block.
     payload[:appearance] ||= {}
+    localize_tab_titles(payload[:tabs])
     errors = error_screen_config(payload[:errors])
     if errors.empty?
       payload.delete(:errors)
@@ -141,6 +158,51 @@ module RubyNative
       payload[:errors] = errors
     end
     payload
+  end
+
+  # Fills each tab's `titles` from `ruby_native.tabs.<key>.title` in the host
+  # app's locale files, mirroring the `ruby_native.errors.*` namespace. The map
+  # is emitted beside the flat `title` rather than replacing it, the same
+  # additive shape as `icon`/`icons`: both platforms decode `title` as a plain
+  # String, so an app that does not read `titles` yet keeps rendering the YAML
+  # copy. Tabs without a `key` are left exactly as authored.
+  #
+  # `title:` is optional in the YAML so a localized app can keep all of its copy
+  # in locale files, but it is never optional on the wire: both platforms decode
+  # it as a required, non-optional String, so a tab missing one fails the whole
+  # config decode and drops the user on the error screen. Fill it from the
+  # default locale, then from any locale that was translated.
+  def self.localize_tab_titles(tabs)
+    Array(tabs).each do |tab|
+      next unless tab.is_a?(Hash)
+
+      key = tab[:key].to_s
+      titles = key.empty? ? {} : translations_for("tabs.#{key}.title")
+      tab[:titles] = titles unless titles.empty?
+      next unless tab[:title].to_s.empty?
+
+      tab[:title] = titles[I18n.default_locale] || titles.values.first || fallback_tab_title(key)
+    end
+  end
+
+  # Reached only when a tab has no `title:` and no translation in any locale,
+  # which would otherwise serve a payload that cannot decode. Names the tab
+  # after its key ("order_history" -> "Order history") so the bar still renders
+  # something recognizable, and says so, since the copy is missing everywhere.
+  def self.fallback_tab_title(key)
+    if key.empty?
+      Rails.logger.warn(
+        "[RubyNative] A tab in config/ruby_native.yml has no `title:`. Give it one, or a `key:` " \
+        "with copy under `ruby_native.tabs.<key>.title` in your locale files."
+      )
+      return "Untitled"
+    end
+
+    Rails.logger.warn(
+      "[RubyNative] Tab #{key.inspect} in config/ruby_native.yml has no `title:` and no " \
+      "`ruby_native.tabs.#{key}.title` translation in any locale. Falling back to a title from the key."
+    )
+    key.humanize
   end
 
   # Merges per-state error-screen icons (from YAML) with localized copy (from
@@ -155,7 +217,7 @@ module RubyNative
         entry[:icons] = state_config[:icons] if state_config[:icons]
       end
       ERROR_SCREEN_COPY_KEYS.each do |key|
-        translations = error_screen_translations("#{state}.#{key}")
+        translations = translations_for("errors.#{state}.#{key}")
         entry[key] = translations unless translations.empty?
       end
       result[state] = entry unless entry.empty?
@@ -163,17 +225,17 @@ module RubyNative
 
     # The Retry button label is shared by both states, so it sits at the top of
     # the block rather than under a state.
-    retry_label = error_screen_translations("retry")
+    retry_label = translations_for("errors.retry")
     config[:retry] = retry_label unless retry_label.empty?
     config
   end
 
-  # Reads `ruby_native.errors.<subkey>` for every available locale, keeping only
-  # the locales the developer actually translated. Copy lives in the host app's
-  # own locale files; the gem ships none.
-  def self.error_screen_translations(subkey)
+  # Reads `ruby_native.<subkey>` for every available locale, keeping only the
+  # locales the developer actually translated. Copy lives in the host app's own
+  # locale files; the gem ships none.
+  def self.translations_for(subkey)
     I18n.available_locales.each_with_object({}) do |locale, result|
-      value = I18n.t("ruby_native.errors.#{subkey}", locale: locale, default: nil)
+      value = I18n.t("ruby_native.#{subkey}", locale: locale, default: nil)
       result[locale] = value unless value.nil?
     end
   end

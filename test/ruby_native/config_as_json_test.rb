@@ -110,6 +110,99 @@ class RubyNative::ConfigAsJsonTest < Minitest::Test
     assert_equal({}, RubyNative.config_as_json[:appearance])
   end
 
+  def test_localizes_tab_titles_from_the_key
+    store_tab_translations(:en, home: {title: "Home"})
+    store_tab_translations(:it, home: {title: "Casa"})
+    I18n.available_locales = [:en, :it]
+
+    with_tabs_config([{title: "Home", key: "home", path: "/", icon: "house"}]) do
+      tab = RubyNative.config_as_json[:tabs].first
+      assert_equal "Home", tab[:title] # the flat string old binaries decode
+      assert_equal({en: "Home", it: "Casa"}, tab[:titles])
+    end
+  end
+
+  def test_leaves_a_tab_without_a_key_alone
+    store_tab_translations(:it, home: {title: "Casa"})
+    I18n.available_locales = [:en, :it]
+
+    with_tabs_config([{title: "Home", path: "/", icon: "house"}]) do
+      tab = RubyNative.config_as_json[:tabs].first
+      assert_equal "Home", tab[:title]
+      refute tab.key?(:titles)
+    end
+  end
+
+  def test_only_emits_locales_the_developer_translated_for_tabs
+    store_tab_translations(:it, home: {title: "Casa"})
+    I18n.available_locales = [:en, :it]
+
+    with_tabs_config([{title: "Home", key: "home", path: "/", icon: "house"}]) do
+      assert_equal({it: "Casa"}, RubyNative.config_as_json[:tabs].first[:titles])
+    end
+  end
+
+  def test_a_yaml_title_wins_over_the_default_locale_translation
+    store_tab_translations(:en, home: {title: "Translated"})
+    I18n.available_locales = [:en]
+
+    with_tabs_config([{title: "Authored", key: "home", path: "/", icon: "house"}]) do
+      tab = RubyNative.config_as_json[:tabs].first
+      assert_equal "Authored", tab[:title]
+      assert_equal({en: "Translated"}, tab[:titles])
+    end
+  end
+
+  # The point of the key: an app that translates every tab can drop `title:`
+  # and keep all of its copy in locale files. Both platforms decode `title` as
+  # a required String, so one is always synthesized for the wire.
+  def test_synthesizes_the_flat_title_from_the_default_locale
+    store_tab_translations(:en, home: {title: "Home"})
+    store_tab_translations(:it, home: {title: "Casa"})
+    I18n.available_locales = [:en, :it]
+
+    with_tabs_config([{key: "home", path: "/", icon: "house"}]) do
+      tab = RubyNative.config_as_json[:tabs].first
+      assert_equal "Home", tab[:title]
+      assert_equal({en: "Home", it: "Casa"}, tab[:titles])
+    end
+  end
+
+  def test_synthesizes_the_flat_title_from_any_locale_when_the_default_is_untranslated
+    store_tab_translations(:it, home: {title: "Casa"})
+    I18n.available_locales = [:en, :it]
+
+    with_tabs_config([{key: "home", path: "/", icon: "house"}]) do
+      assert_equal "Casa", RubyNative.config_as_json[:tabs].first[:title]
+    end
+  end
+
+  # A payload with a null title fails decode on both platforms and drops the
+  # user on the error screen, so an untranslated tab still ships a string.
+  def test_falls_back_to_the_key_when_a_tab_has_no_copy_anywhere
+    I18n.available_locales = [:en]
+
+    log = with_captured_log do
+      with_tabs_config([{key: "order_history", path: "/orders", icon: "bag"}]) do
+        tab = RubyNative.config_as_json[:tabs].first
+        assert_equal "Order history", tab[:title]
+        refute tab.key?(:titles)
+      end
+    end
+    assert_includes log, "ruby_native.tabs.order_history.title"
+  end
+
+  def test_does_not_mutate_the_in_memory_tabs
+    store_tab_translations(:it, home: {title: "Casa"})
+    I18n.available_locales = [:it]
+
+    with_tabs_config([{title: "Home", key: "home", path: "/", icon: "house"}]) do
+      RubyNative.config_as_json
+      # View helpers read `config`; the localized copy only ever rides the JSON.
+      refute RubyNative.config[:tabs].first.key?(:titles)
+    end
+  end
+
   def test_navbar_appearance_passes_through
     write_config(
       app: {name: "Test App"},
@@ -135,6 +228,30 @@ class RubyNative::ConfigAsJsonTest < Minitest::Test
 
   def store_translations(locale, states)
     I18n.backend.store_translations(locale, ruby_native: {errors: states})
+  end
+
+  def store_tab_translations(locale, tabs)
+    I18n.backend.store_translations(locale, ruby_native: {tabs: tabs})
+  end
+
+  def with_tabs_config(tabs)
+    write_config(
+      app: {name: "Test App"},
+      appearance: {tint_color: "#007AFF", background_color: "#FFFFFF"},
+      tabs: tabs
+    )
+    RubyNative.load_config
+    yield
+  end
+
+  def with_captured_log
+    io = StringIO.new
+    original = Rails.logger
+    Rails.logger = Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original
   end
 
   def with_errors_config

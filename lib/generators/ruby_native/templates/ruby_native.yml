@@ -102,6 +102,23 @@ tabs:
 
   # Per-tab options (add to any tab above):
   #
+  #   # Localize this tab's title. Put the copy in your app's own locale files
+  #   # under `ruby_native.tabs.<key>.title`, the same way the error screen uses
+  #   # `ruby_native.errors.*`, and the device's language picks the translation:
+  #   #
+  #   #   # config/locales/it.yml
+  #   #   it:
+  #   #     ruby_native:
+  #   #       tabs:
+  #   #         home:
+  #   #           title: Casa
+  #   #
+  #   # `title:` above stays the fallback for a language you have not
+  #   # translated. Once every tab has a key you can drop `title:` entirely and
+  #   # keep all of your copy in the locale files.
+  #   # https://rubynative.com/docs/tabs#localization
+  #   key: home
+  #
   #   # Load this tab on launch instead of lazily.
   #   # Default: false.
   #   eager: true

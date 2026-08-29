@@ -179,6 +179,31 @@ class RubyNative::ConfigTest < Minitest::Test
     end
   end
 
+  def test_duplicate_tab_keys_are_warned_about
+    log = with_captured_log do
+      with_config(app: {}, tabs: [
+        {title: "Home", key: "home", path: "/"},
+        {title: "Casa", key: "home", path: "/casa"}
+      ]) do
+        RubyNative.load_config
+      end
+    end
+    assert_includes log, "Duplicate tab key(s)"
+    assert_includes log, "home"
+  end
+
+  def test_unique_tab_keys_are_not_warned_about
+    log = with_captured_log do
+      with_config(app: {}, tabs: [
+        {title: "Home", key: "home", path: "/"},
+        {title: "Profile", key: "profile", path: "/profile"}
+      ]) do
+        RubyNative.load_config
+      end
+    end
+    refute_includes log, "Duplicate tab key(s)"
+  end
+
   def test_yaml_aliases_are_permitted
     with_raw_config(<<~YAML) do
       defaults: &defaults
