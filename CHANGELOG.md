@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **`assets:precompile` no longer drops the built bundles from the Propshaft manifest when `config/ruby_native.yml` uses an asset helper such as `image_url`.** Every page 500ed after deploy. The config now loads on the first request instead of at boot, so a YAML or ERB error in it surfaces there rather than failing boot.
+
 ## [0.15.2] - 2026-08-28
 
 ### Fixed
