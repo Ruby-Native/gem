@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Tab bar titles can now be translated in your app's own locale files.** Give a tab a `key:`, put its copy under `ruby_native.tabs.<key>.title`, and the device's language picks the translation. Both platforms. [Docs](https://rubynative.com/docs/tabs#localization)
+
 ## [0.15.2] - 2026-08-28
 
 ### Fixed
