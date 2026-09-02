@@ -53,11 +53,74 @@ class DeployTest < Minitest::Test
     assert_includes captured.to_s, "platform=android"
   end
 
+  # --- Every configured platform ---
+
+  def test_deploy_builds_every_platform_by_default
+    assert_equal "all", RubyNative::CLI::Deploy.new([]).send(:requested_platform)
+  end
+
+  def test_ios_flag_narrows_to_ios
+    assert_equal "ios", RubyNative::CLI::Deploy.new(["--ios"]).send(:requested_platform)
+  end
+
+  def test_skip_when_every_deployable_platform_is_current
+    deploy = all_platform_deploy(
+      "ios" => { "deployable" => true, "gem_version" => "99.0.0" },
+      "android" => { "deployable" => true, "gem_version" => "99.0.0" }
+    )
+
+    assert deploy.send(:skip_build?, "app_123")
+  end
+
+  def test_no_skip_when_one_platform_is_behind
+    deploy = all_platform_deploy(
+      "ios" => { "deployable" => true, "gem_version" => "99.0.0" },
+      "android" => { "deployable" => true, "gem_version" => "0.1.0" }
+    )
+
+    refute deploy.send(:skip_build?, "app_123")
+  end
+
+  # An iOS-only app would otherwise rebuild on every CI run, because Android
+  # reports no build and "never built" would read as "needs building".
+  def test_a_platform_that_is_not_set_up_does_not_block_skipping
+    deploy = all_platform_deploy(
+      "ios" => { "deployable" => true, "gem_version" => "99.0.0" },
+      "android" => { "deployable" => false, "gem_version" => nil }
+    )
+
+    assert deploy.send(:skip_build?, "app_123")
+  end
+
+  # The opposite case, and the reason `deployable` is reported separately: a
+  # track that is set up but has never built has to build.
+  def test_a_configured_platform_with_no_build_is_not_skipped
+    deploy = all_platform_deploy(
+      "ios" => { "deployable" => true, "gem_version" => "99.0.0" },
+      "android" => { "deployable" => true, "gem_version" => nil }
+    )
+
+    refute deploy.send(:skip_build?, "app_123")
+  end
+
+  def test_no_skip_when_no_platform_can_deploy
+    deploy = all_platform_deploy(
+      "ios" => { "deployable" => false, "gem_version" => nil },
+      "android" => { "deployable" => false, "gem_version" => nil }
+    )
+
+    refute deploy.send(:skip_build?, "app_123")
+  end
+
   # --- Platform validation ---
 
   def test_platform_flag_accepts_android
     deploy = RubyNative::CLI::Deploy.new(["--platform=android"])
     assert deploy.send(:android?)
+  end
+
+  def test_platform_flag_accepts_all
+    assert_equal "all", RubyNative::CLI::Deploy.new(["--platform=all"]).send(:requested_platform)
   end
 
   def test_platform_typos_error_instead_of_silently_building_ios
@@ -66,7 +129,7 @@ class DeployTest < Minitest::Test
       assert_equal 1, error.status
     end
     assert_match(/Unknown platform "adnroid"/, out)
-    assert_match(/--platform=ios or --platform=android/, out)
+    assert_match(/--platform=ios, --platform=android, or --platform=all/, out)
   end
 
   # --- Token handling ---
@@ -496,10 +559,18 @@ def test_the_signal_preflight_blocks_a_deploy_with_broken_signals
     receiver.define_singleton_method(name, original) if own
   end
 
-  def build_deploy(latest_build: {}, gem_version: nil)
+  # Single-platform by default: `deploy` with no flags now means every
+  # configured platform, which fetch_latest_build answers in a different shape.
+  def build_deploy(latest_build: {}, gem_version: nil, argv: ["--ios"])
     latest_build = latest_build&.merge("gem_version" => gem_version)
-    deploy = RubyNative::CLI::Deploy.new([])
+    deploy = RubyNative::CLI::Deploy.new(argv)
     deploy.define_singleton_method(:fetch_latest_build) { |_app_id| latest_build }
+    deploy
+  end
+
+  def all_platform_deploy(latest)
+    deploy = RubyNative::CLI::Deploy.new([])
+    deploy.define_singleton_method(:fetch_latest_build) { |_app_id| latest }
     deploy
   end
 

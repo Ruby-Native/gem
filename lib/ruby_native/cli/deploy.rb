@@ -13,7 +13,7 @@ module RubyNative
       HOST = ENV.fetch("RUBY_NATIVE_HOST", "https://rubynative.com")
       POLL_INTERVAL = 5
       POLL_TIMEOUT = 600
-      PLATFORMS = %w[ios android].freeze
+      PLATFORMS = %w[ios android all].freeze
       # Consecutive failures tolerated mid-poll; one blip must not kill a
       # deploy whose build is succeeding server-side.
       MAX_POLL_FAILURES = 3
@@ -158,12 +158,28 @@ module RubyNative
         latest = fetch_latest_build(app_id)
         return false unless latest
 
-        latest_gem_version = latest["gem_version"]
-        return false unless latest_gem_version
+        return skip_all?(latest) if @platform == "all"
 
-        Gem::Version.new(latest_gem_version) >= Gem::Version.new(RubyNative::VERSION)
+        current?(latest["gem_version"])
       rescue ArgumentError
         false
+      end
+
+      # Skip only when every platform that could build is already on this gem
+      # version. A track that is set up but has never built is exactly the case
+      # that must not skip, which is why the server reports `deployable`
+      # separately from whether a build exists.
+      def skip_all?(latest)
+        deployable = latest.select { |_platform, state| state.is_a?(Hash) && state["deployable"] }
+        return false if deployable.empty?
+
+        deployable.all? { |_platform, state| current?(state["gem_version"]) }
+      end
+
+      def current?(gem_version)
+        return false unless gem_version
+
+        Gem::Version.new(gem_version) >= Gem::Version.new(RubyNative::VERSION)
       end
 
       def fetch_latest_build(app_id)
@@ -396,15 +412,19 @@ module RubyNative
         end
       end
 
+      # Every configured platform by default: "deploy my app" means the app, not
+      # whichever half was written first. The server decides what is actually
+      # ready, so an iOS-only app still just builds iOS.
       def parse_platform(argv)
         return "android" if argv.include?("--android")
+        return "ios" if argv.include?("--ios")
 
         flag = argv.find { |a| a.start_with?("--platform=") }
-        return "ios" unless flag
+        return "all" unless flag
 
         value = flag.split("=", 2).last
         unless PLATFORMS.include?(value)
-          puts "Unknown platform #{value.inspect}. Use --platform=ios or --platform=android."
+          puts "Unknown platform #{value.inspect}. Use --platform=ios, --platform=android, or --platform=all."
           exit 1
         end
         value
