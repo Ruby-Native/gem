@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **New `ruby_native check` command finds broken signals before they reach the App Store.** It reads every view in your app and reports typo'd `data-native-*` attributes, duplicated signals where only the first one counts, and signals your app is too old to understand. Add `--deployed` and it compares against the build your users actually have, not just the gem in your Gemfile. Needs the `herb` gem, which Rails 8.2 and later already include. [Docs](https://rubynative.com/docs/cli#check)
+- **New `ruby_native check` command finds broken signals before they reach the App Store.** It reads every view in your app and reports typo'd `data-native-*` attributes, duplicated signals where only the first one counts, and signals your app is too old to understand. Add `--deployed` and it compares against the build your users actually have, not just the gem in your Gemfile. Needs the `herb` gem, which Rails 8.2 and later already include. [Docs](https://rubynative.com/docs/debugging)
 
 ### Changed
 
