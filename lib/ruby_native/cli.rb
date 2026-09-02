@@ -50,6 +50,7 @@ module RubyNative
       puts "    --android          Build for Android instead of iOS"
       puts "    --platform=NAME    Build for ios or android"
       puts "    --if-needed        Skip when this gem version is already built"
+      puts "    --skip-check       Deploy without checking your views for broken signals"
       puts "  login         Authenticate with Ruby Native"
       puts "  logout        Remove stored credentials"
       puts "  preview       Start a tunnel and display a QR code"

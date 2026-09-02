@@ -2,6 +2,7 @@ require "json"
 require "net/http"
 require "uri"
 require "openssl"
+require "ruby_native/cli/check"
 require "ruby_native/cli/credentials"
 require "ruby_native/version"
 
@@ -31,6 +32,7 @@ module RubyNative
 
       def initialize(argv)
         @if_needed = argv.include?("--if-needed")
+        @skip_check = argv.include?("--skip-check")
         @platform = parse_platform(argv)
       end
 
@@ -43,6 +45,8 @@ module RubyNative
           puts "Ruby Native v#{RubyNative::VERSION} already built. Skipping deploy."
           return
         end
+
+        check_signals! unless @skip_check
 
         build = trigger_build(app_id)
         return if @if_needed
@@ -57,6 +61,25 @@ module RubyNative
       end
 
       private
+
+      # A broken signal is invisible until someone opens the build, so it is
+      # worth a second here rather than a TestFlight round trip. Skipped
+      # silently when herb is missing: this is a courtesy, not a dependency the
+      # gem gets to impose on a deploy.
+      def check_signals!
+        offenses = Check.signal_offenses
+        return if offenses.nil?
+
+        errors = offenses.select { |offense| offense.severity == :error }
+        return if errors.empty?
+
+        puts "Found #{errors.size} signal #{errors.size == 1 ? "problem" : "problems"} in your views:"
+        errors.first(10).each { |error| puts "  #{error.file}:#{error.line}  #{error.message}" }
+        puts "  ...and #{errors.size - 10} more." if errors.size > 10
+        puts
+        puts "These will not work in the build. Fix them, or deploy anyway with --skip-check."
+        exit 1
+      end
 
       def ensure_authenticated!
         return if Credentials.token

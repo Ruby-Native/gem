@@ -430,6 +430,61 @@ class DeployTest < Minitest::Test
 
   # Minitest 6 dropped minitest/mock, so swap singleton methods by hand.
   # Remove-then-define keeps the redefinition warnings out of the test output.
+def test_the_signal_preflight_blocks_a_deploy_with_broken_signals
+    offense = RubyNative::CLI::Check::Offense.new(
+      file: "app/views/pages/show.html.erb", line: 1, severity: :error, message: "Unknown signal `data-native-tab`."
+    )
+
+    output, status = capture_deploy_preflight([offense], argv: [])
+
+    assert_equal 1, status
+    assert_match "Unknown signal `data-native-tab`.", output
+    assert_match "--skip-check", output
+  end
+
+  def test_skip_check_bypasses_the_signal_preflight
+    offense = RubyNative::CLI::Check::Offense.new(
+      file: "a.erb", line: 1, severity: :error, message: "Unknown signal `data-native-tab`."
+    )
+
+    _output, status = capture_deploy_preflight([offense], argv: ["--skip-check"])
+
+    assert_equal 0, status
+  end
+
+  def test_a_warning_alone_does_not_block_a_deploy
+    offense = RubyNative::CLI::Check::Offense.new(
+      file: "a.erb", line: 1, severity: :warning, message: "2 elements carry `data-native-tabs`."
+    )
+
+    _output, status = capture_deploy_preflight([offense], argv: [])
+
+    assert_equal 0, status
+  end
+
+  # nil means herb is missing, and a deploy must not fail over a gem the app
+  # never asked for.
+  def test_a_missing_herb_does_not_block_a_deploy
+    _output, status = capture_deploy_preflight(nil, argv: [])
+
+    assert_equal 0, status
+  end
+
+  def capture_deploy_preflight(offenses, argv:)
+    deploy = RubyNative::CLI::Deploy.new(argv)
+    status = 0
+
+    output, = with_singleton_stub(RubyNative::CLI::Check, :signal_offenses, ->(*) { offenses }) do
+      capture_io do
+        deploy.send(:check_signals!) unless argv.include?("--skip-check")
+      rescue SystemExit => error
+        status = error.status
+      end
+    end
+
+    [output, status]
+  end
+
   def with_singleton_stub(receiver, name, replacement)
     original = receiver.method(name)
     own = receiver.singleton_class.instance_methods(false).include?(name)

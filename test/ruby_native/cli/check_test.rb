@@ -97,6 +97,38 @@ class CheckTest < Minitest::Test
     end
   end
 
+  def test_signal_offenses_returns_the_signal_problems_deploy_cares_about
+    in_app do
+      FileUtils.mkdir_p("app/views/pages")
+      File.write("app/views/pages/show.html.erb", "<div data-native-tab hidden></div>")
+
+      offenses = RubyNative::CLI::Check.signal_offenses
+
+      assert_equal 1, offenses.size
+      assert_match "Unknown signal `data-native-tab`", offenses.first.message
+    end
+  end
+
+  # Deploy runs this, and a Rails 8.2 concern must not block a build today.
+  def test_signal_offenses_ignores_templates_that_do_not_compile
+    in_app do
+      FileUtils.mkdir_p("app/views/pages")
+      File.write("app/views/pages/show.html.erb", %(<option value="a" <%= "selected" if @x %>>A</option>))
+
+      assert_empty RubyNative::CLI::Check.signal_offenses
+    end
+  end
+
+  def test_signal_offenses_is_nil_without_herb
+    klass = RubyNative::CLI::Check
+    original = klass.method(:herb_available?)
+    klass.define_singleton_method(:herb_available?) { false }
+
+    assert_nil klass.signal_offenses
+  ensure
+    klass.define_singleton_method(:herb_available?, original)
+  end
+
   def test_a_signal_newer_than_the_deployed_build_is_an_error
     offenses = deployed_offenses_for("ios", built: "0.9.2", signal: "data-native-keyboard-toolbar")
 

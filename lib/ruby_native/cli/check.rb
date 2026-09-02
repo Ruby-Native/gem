@@ -22,9 +22,38 @@ module RubyNative
 
       Offense = Struct.new(:file, :line, :severity, :message, keyword_init: true)
 
-      def initialize(argv)
+      # The signal checks alone, for `deploy` to run as a preflight. Returns nil
+      # when herb is missing rather than failing: a deploy must not start
+      # depending on a gem the app never asked for.
+      #
+      # Deliberately not the compile check. A template erubi accepts today but
+      # Herb rejects is a Rails 8.2 upgrade concern, and blocking someone's
+      # release over an upgrade they have not chosen to make would be wrong.
+      def self.signal_offenses(paths: DEFAULT_PATHS)
+        return nil unless herb_available?
+
+        check = new([], paths: paths)
+
+        check.send(:template_files).flat_map do |file|
+          check.send(:signal_offenses, file, File.read(file, encoding: "UTF-8"))
+        rescue StandardError
+          # A template that will not parse is the compile check's business.
+          []
+        end
+      end
+
+      def self.herb_available?
+        require "herb"
+        require "herb/engine"
+        require "ruby_native/cli/check/signal_collector"
+        true
+      rescue LoadError
+        false
+      end
+
+      def initialize(argv, paths: nil)
         @deployed = argv.include?("--deployed")
-        @paths = parse_paths(argv)
+        @paths = paths || parse_paths(argv)
       end
 
       def run
@@ -48,10 +77,8 @@ module RubyNative
       # --- Loading ---
 
       def require_herb!
-        require "herb"
-        require "herb/engine"
-        require "ruby_native/cli/check/signal_collector"
-      rescue LoadError
+        return if self.class.herb_available?
+
         puts "`ruby_native check` needs the herb gem, which parses HTML and ERB together."
         puts ""
         puts "Add it to your Gemfile:"

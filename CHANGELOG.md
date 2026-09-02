@@ -8,7 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **New `ruby_native check` command finds broken signals before they reach the App Store.** It reads every view in your app and reports typo'd `data-native-*` attributes, duplicated signals where only the first one counts, and signals your app is too old to understand. Add `--deployed` and it compares against the build your users actually have, not just the gem in your Gemfile. Needs the `herb` gem, which Rails 8.2 and later already include.
+- **New `ruby_native check` command finds broken signals before they reach the App Store.** It reads every view in your app and reports typo'd `data-native-*` attributes, duplicated signals where only the first one counts, and signals your app is too old to understand. Add `--deployed` and it compares against the build your users actually have, not just the gem in your Gemfile. Needs the `herb` gem, which Rails 8.2 and later already include. [Docs](https://rubynative.com/docs/cli#check)
+
+### Changed
+
+- **`deploy` now checks your views for broken signals before triggering a build**, so a typo costs you a second instead of a trip through TestFlight. Pass `--skip-check` to deploy anyway, and nothing changes for apps without the `herb` gem.
 
 ## [0.15.3] - 2026-08-31
 
