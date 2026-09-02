@@ -15,9 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`deploy` now builds every platform you have configured, not just iOS.** Use `--ios` to build one, the way `--android` already did.
 - **`deploy` now fails when any platform fails.** It reported only the first build before, so a failed Android build could pass behind a successful iOS one.
 - **`deploy` now checks your views for broken signals before starting a build.** Pass `--skip-check` to skip it.
+- **The keyboard now scrolls the page instead of resizing it, matching iOS.** Screens without a tab bar used to shrink the page to fit above the keyboard, so a full-height layout reflowed as it opened. Advanced Mode on Android.
 
 ### Fixed
 
+- **A text field at the bottom of the page is no longer hidden behind the keyboard.** Tapping it opened the keyboard over the field with nothing on the page moving out of the way. Normal Mode on Android.
 - **The floating action button now hides while the keyboard is open.** It used to slide up and land on top of whatever your page anchors to the bottom, like a chat composer. Advanced Mode on Android.
 
 ## [0.15.3] - 2026-08-31
