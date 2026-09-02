@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`deploy` now fails when any platform fails.** It reported only the first build before, so a failed Android build could pass behind a successful iOS one.
 - **`deploy` now checks your views for broken signals before starting a build.** Pass `--skip-check` to skip it.
 
+### Fixed
+
+- **The floating action button now hides while the keyboard is open.** It used to slide up and land on top of whatever your page anchors to the bottom, like a chat composer. Advanced Mode on Android.
+
 ## [0.15.3] - 2026-08-31
 
 ### Added
