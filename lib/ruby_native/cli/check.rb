@@ -22,29 +22,19 @@ module RubyNative
 
       Offense = Struct.new(:file, :line, :severity, :message, keyword_init: true)
 
-      # The signal checks alone, for `deploy` to run as a preflight. Returns nil
-      # when herb is missing rather than failing: a deploy must not start
-      # depending on a gem the app never asked for.
-      #
-      # Deliberately not the compile check. A template erubi accepts today but
-      # Herb rejects is a Rails 8.2 upgrade concern, and blocking someone's
-      # release over an upgrade they have not chosen to make would be wrong.
+      # The same checks `run` reports, for `deploy` to run as a preflight.
+      # Returns nil when herb is missing rather than failing: a deploy must not
+      # start depending on a gem the app never asked for.
       def self.signal_offenses(paths: DEFAULT_PATHS)
         return nil unless herb_available?
 
         check = new([], paths: paths)
 
-        check.send(:template_files).flat_map do |file|
-          check.send(:signal_offenses, file, File.read(file, encoding: "UTF-8"))
-        rescue StandardError
-          # A template that will not parse is the compile check's business.
-          []
-        end
+        check.send(:template_files).flat_map { |file| check.send(:check_file, file) }
       end
 
       def self.herb_available?
         require "herb"
-        require "herb/engine"
         require "ruby_native/cli/check/signal_collector"
         true
       rescue LoadError
@@ -94,47 +84,14 @@ module RubyNative
 
       # --- Per-file checks ---
 
+      # Herb's parser tolerates markup its compiler rejects, so every template
+      # gets scanned whether or not it would build under Rails 8.2. Whether
+      # their ERB is Herb-clean is their upgrade to make, and `herb lint` is
+      # the tool for it.
       def check_file(file)
-        source = File.read(file, encoding: "UTF-8")
-
-        compile_offenses = compile(file, source)
-        # A template that will not compile has no trustworthy tree to walk, so
-        # its signals are reported on the next run instead of as a cascade now.
-        return compile_offenses if compile_offenses.any?
-
-        signal_offenses(file, source)
+        signal_offenses(file, File.read(file, encoding: "UTF-8"))
       rescue ArgumentError => error
         [Offense.new(file: file, line: 1, severity: :error, message: "Could not read the file: #{error.message}")]
-      end
-
-      def compile(file, source)
-        Herb::Engine.new(source, filename: file)
-        []
-      rescue *engine_errors => error
-        offenses = error.message.lines.grep(/ - /).map do |line|
-          line = line.strip
-          Offense.new(
-            file: file,
-            line: line[/:(\d+):\d+ -/, 1].to_i,
-            severity: :error,
-            message: line.sub(/\A.*?:\d+:\d+ - /, "")
-          )
-        end
-
-        # An error shape we do not recognize is still worth reporting, just
-        # without a line number to hang it on.
-        offenses << Offense.new(file: file, line: 0, severity: :error, message: error.message.strip) if offenses.empty?
-        offenses
-      end
-
-      # Herb's engine errors are siblings rather than a hierarchy, so they have
-      # to be listed. Anything it adds later still surfaces through the raw
-      # message above.
-      def engine_errors
-        @engine_errors ||= Herb::Engine.constants
-          .grep(/Error\z/)
-          .map { |name| Herb::Engine.const_get(name) }
-          .select { |constant| constant.is_a?(Class) && constant <= StandardError }
       end
 
       def signal_offenses(file, source)

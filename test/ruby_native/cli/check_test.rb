@@ -46,17 +46,17 @@ class CheckTest < Minitest::Test
     assert_match "No problems found.", output
   end
 
-  def test_erb_in_attribute_position_fails_to_compile
-    output = check(%(<option value="a" <%= "selected" if @x %>>A</option>), status: 1)
-
-    assert_match "not allowed in attribute position", output
+  # Herb's compiler rejects ERB in attribute position, but its parser does not,
+  # and whether their ERB is Rails 8.2 ready is not this command's business.
+  def test_markup_herbs_compiler_would_reject_is_not_an_error
+    assert_match "No problems found.", check(%(<option value="a" <%= "selected" if @x %>>A</option>))
   end
 
-  def test_a_template_that_does_not_compile_reports_only_the_compile_error
+  def test_a_template_that_would_not_compile_still_gets_its_signals_checked
     output = check(%(<div data-native-tab <%= "hidden" if @x %>></div>), status: 1)
 
-    assert_match "attribute position", output
-    refute_match "Unknown signal", output
+    assert_match "Unknown signal `data-native-tab`", output
+    refute_match "attribute position", output
   end
 
   def test_a_signal_newer_than_the_gem_is_an_error
@@ -77,12 +77,10 @@ class CheckTest < Minitest::Test
     assert_match "No problems found.", check(%(<div data-native-badge-tab="<%= @count %>" hidden></div>))
   end
 
-  # Herb rejects these outright, so the scan never sees the attribute. Worth
-  # pinning: it is why the collector does not need to resolve dynamic names.
-  def test_an_attribute_name_built_from_erb_fails_to_compile
-    output = check(%(<div <%= @attribute %>="x"></div>), status: 1)
-
-    assert_match "ERB output in attribute names is not allowed", output
+  # An attribute name that only exists at render time cannot be resolved
+  # statically, and guessing at one would be worse than skipping it.
+  def test_an_attribute_name_built_from_erb_is_skipped
+    assert_match "No problems found.", check(%(<div <%= @attribute %>="x"></div>))
   end
 
   def test_signals_outside_the_scanned_paths_are_not_checked
@@ -110,7 +108,7 @@ class CheckTest < Minitest::Test
   end
 
   # Deploy runs this, and a Rails 8.2 concern must not block a build today.
-  def test_signal_offenses_ignores_templates_that_do_not_compile
+  def test_signal_offenses_does_not_flag_templates_that_would_not_compile
     in_app do
       FileUtils.mkdir_p("app/views/pages")
       File.write("app/views/pages/show.html.erb", %(<option value="a" <%= "selected" if @x %>>A</option>))
@@ -122,10 +120,12 @@ class CheckTest < Minitest::Test
   def test_signal_offenses_is_nil_without_herb
     klass = RubyNative::CLI::Check
     original = klass.method(:herb_available?)
+    klass.singleton_class.send(:remove_method, :herb_available?)
     klass.define_singleton_method(:herb_available?) { false }
 
     assert_nil klass.signal_offenses
   ensure
+    klass.singleton_class.send(:remove_method, :herb_available?)
     klass.define_singleton_method(:herb_available?, original)
   end
 
