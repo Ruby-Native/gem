@@ -1,0 +1,134 @@
+# The signal vocabulary: every data-native-* attribute Ruby Native accepts.
+#
+# `ruby_native check` validates your views against this file, and the native
+# shells assert their own vocabulary matches it. `since` is the gem version
+# that introduced the signal; a signal older than the shell running it is
+# ignored silently on device, which is what `check` exists to catch.
+#
+# `owner: shell` marks a signal the app writes into the page rather than one
+# your views emit.
+---
+signals:
+  data-native-action:
+    since: "0.11.2"
+  data-native-anchor:
+    since: "0.14.0"
+    helper: native_menu_tag
+  data-native-app:
+    owner: shell
+  data-native-badge:
+    since: "0.3.2"
+    helper: native_badge_tag
+    singleton: true
+  data-native-badge-home:
+    since: "0.3.2"
+    helper: native_badge_tag
+  data-native-badge-tab:
+    since: "0.3.2"
+    helper: native_badge_tag
+  data-native-button:
+    since: "0.4.0"
+  data-native-click:
+    since: "0.4.0"
+    helper: native_fab_tag
+  data-native-color:
+    since: "0.14.0"
+    helper: native_fab_tag
+  data-native-destructive:
+    since: "0.14.0"
+  data-native-fab:
+    since: "0.8.0"
+    helper: native_fab_tag
+    singleton: true
+  data-native-form:
+    since: "0.1.2"
+    helper: native_form_tag
+    singleton: true
+  data-native-haptic:
+    since: "0.2.7"
+    helper: native_haptic_data
+  data-native-href:
+    since: "0.4.0"
+    helper: native_fab_tag
+  data-native-icon:
+    since: "0.4.0"
+    helper: native_fab_tag
+  data-native-identity:
+    since: "0.12.0"
+    helper: native_identity_tag
+    singleton: true
+  data-native-keyboard-toolbar:
+    since: "0.15.0"
+    helper: native_keyboard_tag
+    singleton: true
+  data-native-menu:
+    since: "0.14.0"
+    helper: native_menu_tag
+  data-native-menu-item:
+    since: "0.4.0"
+  data-native-navbar:
+    since: "0.4.0"
+    helper: native_navbar_tag
+    singleton: true
+  data-native-overscroll-bottom:
+    since: "0.5.0"
+    helper: native_overscroll_tag
+    singleton: true
+  data-native-overscroll-top:
+    since: "0.5.0"
+    helper: native_overscroll_tag
+    singleton: true
+  data-native-position:
+    since: "0.4.0"
+  data-native-presentation:
+    since: "0.11.2"
+    helper: native_presentation_tag
+    singleton: true
+  data-native-price:
+    since: "0.5.3"
+  data-native-pull-to-refresh:
+    since: "0.10.0"
+    helper: native_navbar_tag
+  data-native-purchase:
+    since: "0.5.3"
+  data-native-push:
+    since: "0.1.2"
+    helper: native_push_tag
+    singleton: true
+  data-native-restore:
+    since: "0.5.3"
+  data-native-review:
+    since: "0.9.3"
+    helper: native_review_tag
+  data-native-segment:
+    since: "0.10.12"
+  data-native-selected:
+    since: "0.4.0"
+  data-native-share:
+    since: "0.10.9"
+  data-native-share-url:
+    since: "0.10.9"
+  data-native-submit-button:
+    since: "0.4.0"
+    singleton: true
+  data-native-tabs:
+    since: "0.1.2"
+    helper: native_tabs_tag
+    singleton: true
+  data-native-title:
+    since: "0.4.0"
+  data-native-toast:
+    since: "0.12.1"
+    helper: native_toast_tag
+  data-native-toast-appearance:
+    since: "0.12.1"
+    helper: native_toast_tag
+  data-native-toast-duration:
+    since: "0.12.1"
+    helper: native_toast_tag
+  data-native-toast-icon:
+    since: "0.12.1"
+    helper: native_toast_tag
+  data-native-toast-message:
+    since: "0.12.1"
+    helper: native_toast_tag

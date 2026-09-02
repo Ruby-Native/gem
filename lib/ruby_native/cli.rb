@@ -1,3 +1,4 @@
+require "ruby_native/cli/check"
 require "ruby_native/cli/credentials"
 require "ruby_native/cli/deploy"
 require "ruby_native/cli/login"
@@ -8,6 +9,8 @@ module RubyNative
     def self.start(argv)
       command = argv.shift
       case command
+      when "check"
+        RubyNative::CLI::Check.new(argv).run
       when "deploy"
         RubyNative::CLI::Deploy.new(argv).run
       when "preview"
@@ -40,6 +43,9 @@ module RubyNative
       puts "Usage: ruby_native <command> [options]"
       puts ""
       puts "Commands:"
+      puts "  check         Validate your views against the signal vocabulary"
+      puts "    --deployed         Also compare against the build your users have"
+      puts "    --paths=A,B        Directories to scan (default: app/views)"
       puts "  deploy        Trigger a build and wait for it to finish"
       puts "    --android          Build for Android instead of iOS"
       puts "    --platform=NAME    Build for ios or android"
