@@ -347,6 +347,13 @@ module RubyNative
         @items = []
       end
 
+      # Adds a button to the nav bar. `position:` is :leading, :trailing (the
+      # default; repeat it and the buttons sit side by side), or :title, which
+      # turns the bar's title into a dropdown menu instead of adding a bar item.
+      # A :title button takes a menu block and no icon or label of its own: keep
+      # a title on `native_navbar_tag` and it labels the dropdown, or omit it and
+      # the `selected:` item's text does.
+      # https://rubynative.com/docs/navbar#title-menu
       def button(title = nil, icon: nil, icons: nil, href: nil, click: nil, position: :trailing, selected: false, &block)
         resolved = RubyNative::Helper.resolve_icon(icon: icon, icons: icons, platform: @context.try(:native_platform))
         data = { native_button: "" }
