@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **`deploy` now waits on every build it started and fails if any of them fail.** It followed only the first before, so a failed Android build could exit 0 behind a successful iOS one and leave CI green over a broken release.
 - **`deploy` now builds every platform you have configured, instead of only iOS.** An app with both tracks set up gets both from one command, and adding Google Play later needs no pipeline change. Use `--ios` to build one platform, the way `--android` already did. `--if-needed` follows: it skips only when every configured platform is already on your gem version.
 - **`deploy` now checks your views for broken signals before triggering a build**, so a typo costs you a second instead of a trip through TestFlight. Pass `--skip-check` to deploy anyway, and nothing changes for apps without the `herb` gem.
 

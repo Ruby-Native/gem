@@ -254,6 +254,78 @@ class DeployTest < Minitest::Test
     assert_match(/dashboard/, out)
   end
 
+  # --- Polling every build a deploy started ---
+
+  # The whole reason this exists: iOS succeeding used to exit 0 while Android
+  # failed unnoticed, leaving CI green over a broken release.
+  def test_poll_fails_when_any_platform_fails
+    deploy = poll_deploy
+    deploy.define_singleton_method(:fetch_build_status) do |_app_id, build_id|
+      if build_id == 1
+        [:ok, { "status" => "success", "version" => "1.0", "number" => 7, "platform" => "ios" }]
+      else
+        [:ok, { "status" => "failure", "error_message" => "Gradle exploded", "platform" => "android" }]
+      end
+    end
+
+    out, _err = capture_io do
+      error = assert_raises(SystemExit) { poll_both(deploy) }
+      assert_equal 1, error.status
+    end
+
+    assert_match(/iOS: Build succeeded!/, out)
+    assert_match(/Android: Build failed\./, out)
+    assert_match(/Gradle exploded/, out)
+  end
+
+  def test_poll_succeeds_when_every_platform_succeeds
+    deploy = poll_deploy
+    deploy.define_singleton_method(:fetch_build_status) do |_app_id, build_id|
+      platform = build_id == 1 ? "ios" : "android"
+      [:ok, { "status" => "success", "version" => "1.0", "number" => 7, "platform" => platform }]
+    end
+
+    out, _err = capture_io { poll_both(deploy) }
+
+    assert_match(/iOS: Build succeeded!/, out)
+    assert_match(/Android: Build succeeded!/, out)
+  end
+
+  def test_poll_labels_platforms_only_when_there_is_more_than_one
+    deploy = poll_deploy
+    deploy.define_singleton_method(:fetch_build_status) do |_app_id, _build_id|
+      [:ok, { "status" => "success", "version" => "1.0", "number" => 7, "platform" => "ios" }]
+    end
+
+    out, _err = capture_io do
+      deploy.send(:poll_build_status, "app_123", { "id" => 1, "status" => "queued", "platform" => "ios" })
+    end
+
+    assert_match(/Build succeeded!/, out)
+    refute_match(/iOS:/, out)
+  end
+
+  # One platform answering is enough to keep the deploy alive, so a blip on the
+  # other does not spend the whole failure budget.
+  def test_poll_survives_one_platform_being_unreachable
+    deploy = poll_deploy
+    android_attempts = 0
+    deploy.define_singleton_method(:fetch_build_status) do |_app_id, build_id|
+      if build_id == 1
+        [:ok, { "status" => "success", "version" => "1.0", "number" => 7, "platform" => "ios" }]
+      else
+        android_attempts += 1
+        raise RubyNative::CLI::Deploy::ConnectionError, "Could not connect." if android_attempts < 4
+
+        [:ok, { "status" => "success", "version" => "1.0", "number" => 8, "platform" => "android" }]
+      end
+    end
+
+    out, _err = capture_io { poll_both(deploy) }
+
+    assert_match(/Android: Build succeeded!/, out)
+  end
+
   def test_poll_stops_early_on_a_persistent_404
     deploy = poll_deploy
     deploy.define_singleton_method(:fetch_build_status) { |_app_id, _build_id| [:not_found, nil] }
@@ -585,6 +657,15 @@ def test_the_signal_preflight_blocks_a_deploy_with_broken_signals
     deploy = RubyNative::CLI::Deploy.new([])
     deploy.define_singleton_method(:sleep) { |_| }
     deploy
+  end
+
+  def poll_both(deploy)
+    deploy.send(
+      :poll_build_status,
+      "app_123",
+      { "id" => 1, "status" => "queued", "platform" => "ios" },
+      [{ "id" => 2, "status" => "queued", "platform" => "android" }]
+    )
   end
 
   def trigger_deploy(response)

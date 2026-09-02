@@ -51,7 +51,9 @@ module RubyNative
         build = trigger_build(app_id)
         return if @if_needed
 
-        poll_build_status(app_id, build)
+        # `builds` is present when one deploy started more than one; an older
+        # server omits it and the primary build is the whole story.
+        poll_build_status(app_id, build, Array(build["builds"]).drop(1))
       rescue TokenExpiredError
         abort_token_expired!
       rescue ConnectionError => error
@@ -257,17 +259,21 @@ module RubyNative
 
       # --- Polling ---
 
-      def poll_build_status(app_id, build)
-        build_id = build["id"]
-        last_status = build["status"]
+      # Polls every build this deploy started, not just the first. With both
+      # platforms dispatched at once, watching only one meant a failed Android
+      # build exited 0 and left CI green over a broken release.
+      def poll_build_status(app_id, build, others = [])
+        states = ([build] + Array(others)).compact.uniq { |candidate| candidate["id"] }.map do |candidate|
+          { id: candidate["id"], platform: candidate["platform"], status: candidate["status"], not_found: 0, error: nil, result: nil }
+        end
+        many = states.size > 1
+
         puts ""
-        puts "Waiting for build to complete. Ctrl+C to exit (your build will continue)."
-        print_status(last_status)
+        puts "Waiting for #{many ? "builds" : "build"} to complete. Ctrl+C to exit (your #{many ? "builds" : "build"} will continue)."
+        states.each { |state| print_status(state[:status], label_for(state, many)) }
 
         started_at = Time.now
         connection_failures = 0
-        not_found_count = 0
-        reported_error = nil
 
         loop do
           sleep POLL_INTERVAL
@@ -278,70 +284,106 @@ module RubyNative
             exit 1
           end
 
-          begin
-            state, payload = fetch_build_status(app_id, build_id)
-            connection_failures = 0
-          rescue ConnectionError => error
+          connection_error = nil
+          reached = 0
+
+          states.reject { |state| state[:result] }.each do |state|
+            begin
+              api_state, payload = fetch_build_status(app_id, state[:id])
+              reached += 1
+            rescue ConnectionError => error
+              connection_error = error
+              next
+            end
+
+            advance_build(state, api_state, payload, many)
+          end
+
+          # Only a tick where nothing was reachable counts against the budget,
+          # so one platform answering keeps the deploy alive.
+          if reached.zero?
             connection_failures += 1
             next if connection_failures < MAX_POLL_FAILURES
 
             puts ""
-            puts error.message
+            puts connection_error.message
             puts "Your build is most likely still running server-side. Check the"
             puts "Ruby Native dashboard for the result: #{HOST}/dashboard"
             exit 1
           end
 
-          case state
-          when :not_found
-            not_found_count += 1
-            next if not_found_count < MAX_POLL_FAILURES
-
-            puts ""
-            puts "The server can no longer find this build (404). The app or build"
-            puts "may have been deleted or archived. Check the Ruby Native"
-            puts "dashboard: #{HOST}/dashboard"
-            exit 1
-          when :error
-            # The build keeps running server-side through a 500, so keep polling.
-            if payload != reported_error
-              reported_error = payload
-              puts ""
-              puts "#{URI(HOST).host} returned #{payload} while checking the build. Still trying..."
-            end
-            next
-          end
-
-          not_found_count = 0
-          data = payload
-          print_notice(data)
-
-          if data["status"] != last_status
-            last_status = data["status"]
-            print_status(last_status)
-          end
-
-          case last_status
-          when "success", "ready"
-            puts ""
-            puts "Build succeeded!"
-            puts "  Version: v#{data["version"]} (#{data["number"]})"
-            puts "  Ruby Native: #{data["native_version"]}" if data["native_version"]
-            puts ""
-            puts success_destination_message(data)
-            break
-          when "failure", "failed", "cancelled"
-            puts ""
-            puts "Build failed."
-            puts "  Error: #{data["error_message"]}" if data["error_message"]
-            exit 1
-          end
+          connection_failures = 0
+          break if states.all? { |state| state[:result] }
         end
+
+        exit 1 if states.any? { |state| state[:result] == :failed }
       rescue Interrupt
         puts ""
         puts ""
         puts "Stopped polling. Your build is still running."
         puts "Check the Ruby Native dashboard for status."
+      end
+
+      def advance_build(state, api_state, payload, many)
+        label = label_for(state, many)
+
+        case api_state
+        when :not_found
+          state[:not_found] += 1
+          return if state[:not_found] < MAX_POLL_FAILURES
+
+          puts ""
+          puts "#{label}The server can no longer find this build (404). The app or build"
+          puts "may have been deleted or archived. Check the Ruby Native"
+          puts "dashboard: #{HOST}/dashboard"
+          state[:result] = :failed
+          return
+        when :error
+          # The build keeps running server-side through a 500, so keep polling.
+          if payload != state[:error]
+            state[:error] = payload
+            puts ""
+            puts "#{label}#{URI(HOST).host} returned #{payload} while checking the build. Still trying..."
+          end
+          return
+        end
+
+        state[:not_found] = 0
+        data = payload
+        print_notice(data)
+
+        if data["status"] != state[:status]
+          state[:status] = data["status"]
+          print_status(state[:status], label)
+        end
+
+        case state[:status]
+        when "success", "ready"
+          puts ""
+          puts "#{label}Build succeeded!"
+          puts "  Version: v#{data["version"]} (#{data["number"]})"
+          puts "  Ruby Native: #{data["native_version"]}" if data["native_version"]
+          puts ""
+          puts success_destination_message(data)
+          state[:result] = :succeeded
+        when "failure", "failed", "cancelled"
+          puts ""
+          puts "#{label}Build failed."
+          puts "  Error: #{data["error_message"]}" if data["error_message"]
+          state[:result] = :failed
+        end
+      end
+
+      # Platform names only appear when there is more than one build to tell
+      # apart, so single-platform output is unchanged.
+      def label_for(state, many)
+        return "" unless many
+
+        case state[:platform]
+        when "ios" then "iOS: "
+        when "android" then "Android: "
+        else ""
+        end
       end
 
       # Returns [:ok, data], [:not_found, nil], or [:error, description].
@@ -370,9 +412,9 @@ module RubyNative
         end
       end
 
-      def print_status(status)
+      def print_status(status, prefix = "")
         label = status_labels[status]
-        puts "  #{label}..." if label
+        puts "  #{prefix}#{label}..." if label
       end
 
       # Server-provided warnings (a lapsed payment, say) reach customers with
