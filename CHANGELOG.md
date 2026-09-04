@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- **Turn off the launch ping with `analytics: false` in `config/ruby_native.yml`.** Needs a build on this release or later. Both platforms, both modes.
+
+### Removed
+
+- **The "temporarily unavailable" screen is gone from both apps.** Both platforms, both modes.
+
 ## [0.16.0] - 2026-09-03
 
 ### Added
