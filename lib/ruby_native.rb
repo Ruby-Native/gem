@@ -63,6 +63,7 @@ module RubyNative
     backfill_tab_icons
     backfill_error_icons
     warn_on_duplicate_tab_keys
+    normalize_analytics
   end
 
   # config/ruby_native.yml is rendered as ERB before it is parsed, so a
@@ -276,5 +277,14 @@ module RubyNative
       .map { |path| path.to_s.strip.sub(/\*+\z/, "") }
       .reject(&:empty?)
       .map { |path| path.start_with?("/") ? path : "/#{path}" }
+  end
+
+  # A non-boolean, even the string "false", fails the native config decode on both platforms.
+  def self.normalize_analytics
+    return unless self.config.key?(:analytics)
+    return if [true, false].include?(self.config[:analytics])
+
+    Rails.logger.warn("[RubyNative] analytics in config/ruby_native.yml must be true or false; ignoring it.")
+    self.config.delete(:analytics)
   end
 end

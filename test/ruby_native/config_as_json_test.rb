@@ -224,6 +224,28 @@ class RubyNative::ConfigAsJsonTest < Minitest::Test
     assert_equal "#FFFFFF", navbar[:foreground_color]
   end
 
+  def test_emits_analytics_false
+    with_analytics_config(false) do
+      assert_equal false, RubyNative.config_as_json[:analytics]
+    end
+  end
+
+  # Both platforms decode `analytics` as an optional Bool, so a string like
+  # "no" would fail the whole config decode. It is dropped instead.
+  def test_drops_a_non_boolean_analytics_value_and_warns
+    log = with_captured_log do
+      with_analytics_config("no") do
+        refute RubyNative.config_as_json.key?(:analytics)
+      end
+    end
+    assert_includes log, "analytics in config/ruby_native.yml must be true or false; ignoring it."
+  end
+
+  def test_omits_analytics_when_unconfigured
+    RubyNative.load_config
+    refute RubyNative.config_as_json.key?(:analytics)
+  end
+
   private
 
   def store_translations(locale, states)
@@ -232,6 +254,17 @@ class RubyNative::ConfigAsJsonTest < Minitest::Test
 
   def store_tab_translations(locale, tabs)
     I18n.backend.store_translations(locale, ruby_native: {tabs: tabs})
+  end
+
+  def with_analytics_config(value)
+    write_config(
+      app: {name: "Test App"},
+      appearance: {tint_color: "#007AFF", background_color: "#FFFFFF"},
+      tabs: [{title: "Home", path: "/", icon: "house"}],
+      analytics: value
+    )
+    RubyNative.load_config
+    yield
   end
 
   def with_tabs_config(tabs)
