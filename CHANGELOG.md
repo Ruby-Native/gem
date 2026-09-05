@@ -8,7 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Turn off the launch ping with `analytics: false` in `config/ruby_native.yml`.** Needs a build on this release or later. Both platforms, both modes.
+- **Turn off the launch ping with `analytics: false` in `config/ruby_native.yml`.** Needs a build on this release or later. Both platforms, both modes. [Docs](https://rubynative.com/docs/setup#usage-reporting)
+- **Your dashboard shows each app's monthly active devices, split by platform, with a daily trend.**
+
+### Changed
+
+- **Advanced Mode is out of beta.**
+
+### Fixed
+
+- **Inputs stay above the keyboard on Android devices whose WebView predates version 139.** The keyboard covered them since 0.16.0. Both modes.
+- **iOS apps now report a failed config load to your dashboard.** Only Android apps did before.
 
 ### Removed
 
