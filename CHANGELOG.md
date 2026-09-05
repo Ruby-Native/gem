@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Fixed
+
+- **A paywall written the way the docs show now records the purchase.** Subscriptions bought through it never reached your Rails app before. Needs a build on this release or later. iOS.
+- **`ruby_native check` and `deploy` no longer reject a paywall written the way the docs show.** They reported `data-native-customer-id` and `data-native-success-path` as unknown signals since 0.16.0.
+
 ## [0.17.0] - 2026-09-05
 
 ### Added
