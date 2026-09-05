@@ -34,6 +34,9 @@ signals:
   data-native-color:
     since: "0.14.0"
     helper: native_fab_tag
+  # The shell reads the prefixed form from builds made after 0.17.0; older builds read data-customer-id only.
+  data-native-customer-id:
+    since: "0.17.0"
   data-native-destructive:
     since: "0.14.0"
   data-native-fab:
@@ -111,6 +114,9 @@ signals:
   data-native-submit-button:
     since: "0.4.0"
     singleton: true
+  # The shell reads the prefixed form from builds made after 0.17.0; older builds read data-success-path only.
+  data-native-success-path:
+    since: "0.17.0"
   data-native-tabs:
     since: "0.1.2"
     helper: native_tabs_tag

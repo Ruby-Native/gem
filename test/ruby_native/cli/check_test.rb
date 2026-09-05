@@ -13,6 +13,20 @@ class CheckTest < Minitest::Test
     assert_match "Checked 1 template. No problems found.", output
   end
 
+  def test_the_documented_paywall_passes
+    output = check(<<~ERB)
+      <div data-native-purchase="com.yourapp.pro.monthly"
+           data-native-customer-id="<%= current_user.id %>"
+           data-native-success-path="<%= dashboard_path %>">
+        <span data-native-price="com.yourapp.pro.monthly">$9.99</span>
+        <button type="submit">Subscribe</button>
+      </div>
+      <button data-native-restore>Restore purchases</button>
+    ERB
+
+    assert_match "No problems found.", output
+  end
+
   def test_a_typo_is_an_error_with_a_suggestion
     output = check("<div data-native-tab hidden></div>", status: 1)
 

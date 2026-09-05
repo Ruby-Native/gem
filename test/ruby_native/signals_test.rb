@@ -31,6 +31,11 @@ class SignalsTest < Minitest::Test
     end
   end
 
+  def test_the_documented_paywall_attributes_are_known
+    assert RubyNative::Signals.known?("data-native-customer-id")
+    assert RubyNative::Signals.known?("data-native-success-path")
+  end
+
   def test_known_signals
     assert RubyNative::Signals.known?("data-native-tabs")
     refute RubyNative::Signals.known?("data-native-tab")
